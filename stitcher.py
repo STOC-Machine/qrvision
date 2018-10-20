@@ -4,8 +4,23 @@ import cv2
 from pyzbar.pyzbar import decode
 from PIL import Image
 
-# Total thing: 21 blocks wide
-# 10 each side, 1 shared in the middle
+'''
+This file is stitch_cropped_fragments and its boilerplate code.
+It takes the corners of the QR code and stitches them into a complete code
+that should be readable.
+
+You need to input the images in their correct corners.
+Each corner also has to be cropped to just the QR code fragment.
+Background increases the error in the reconstruction because it
+takes everything at face value, it can't respond to any non-QR parts of the images.
+
+The corner images should also be at the same scale and near the same size.
+How exact that has to be is a matter of how forgiving the QR reader is;
+we don't make any attempts to fix that here.
+TODO: this could be a good thing to fix here.
+If we do it elsewhere, I probably won't need to match the corner dimensions exactly,
+although it may still be a good idea to double-check if it doesn't add much time.
+'''
 
 tl = cv2.imread('sample-images/top-left-small.png', 0)
 tr = cv2.imread('sample-images/top-right-small.png', 0)
