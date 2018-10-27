@@ -95,8 +95,8 @@ def get_min_dimensions(*images):
 
 def get_max_dimensions(*images):
     # Get dimensions
-    max_width = float('inf')
-    max_height = float('inf')
+    max_width = -float('inf')
+    max_height = -float('inf')
     for image in images:
         width = image.shape[1]
         if width > max_width:
@@ -104,9 +104,9 @@ def get_max_dimensions(*images):
         height = image.shape[0]
         if height > max_height:
             max_height = height
-    assert(min_width != float('inf') and min_height != float('inf'))
-    assert(min_width > 0 and min_height > 0)
-    return (min_height, min_width)
+    assert(max_width != float('inf') and max_height != float('inf'))
+    assert(max_width > 0 and max_height > 0)
+    return (max_height, max_width)
 
 def match_images(top_left, top_right, bottom_left, bottom_right, scale_down=True):
     # Crop images to square: should be roughly square to begin
