@@ -27,13 +27,18 @@ tr = cv2.imread('sample-images/top-right-small.png', 0)
 bl = cv2.imread('sample-images/bottom-left-small.png', 0)
 br = cv2.imread('sample-images/bottom-right-small.png', 0)
 
+tl = cv2.imread('sample-images/scaled-tl.png', 0)
+tr = cv2.imread('sample-images/scaled-tr.png', 0)
+bl = cv2.imread('sample-images/scaled-bl.png', 0)
+br = cv2.imread('sample-images/scaled-br.png', 0)
+
 def stitch_cropped_fragments(top_left, top_right, bottom_left, bottom_right):
     print('top left: {}'.format(top_left.shape))
     print('top right: {}'.format(top_right.shape))
     print('bottom left: {}'.format(bottom_left.shape))
     print('bottom right: {}'.format(bottom_right.shape))
 
-    top_left, top_right, bottom_left, bottom_right = crop_images_to_size(top_left, top_right, bottom_left, bottom_right)
+    top_left, top_right, bottom_left, bottom_right = scale_match_images(top_left, top_right, bottom_left, bottom_right)
 
     # Stitch sides together
     cropped = remove_blocks_from_fragment(top_right, 11, axis=1)
@@ -45,38 +50,6 @@ def stitch_cropped_fragments(top_left, top_right, bottom_left, bottom_right):
     cropped = remove_blocks_from_fragment(bottom, 11, axis=0)
     recon = np.concatenate((top, cropped), axis=0)
     return recon
-
-def crop_images_to_size(top_left, top_right, bottom_left, bottom_right):
-    min_dimensions = get_min_dimensions(top_left, top_right, bottom_left, bottom_right)
-    print('Resizing images... dimensions: {}'.format(min_dimensions))
-    min_width = min_dimensions[1]
-    min_height = min_dimensions[0]
-
-    # crop left images along right edge
-    top_left = np.delete(top_left, np.s_[min_width:], 1)
-    bottom_left = np.delete(bottom_left, np.s_[min_width:], 1)
-    assert(top_left.shape[1] == bottom_left.shape[1])
-    print('left width: {}'.format(top_left.shape[1]))
-
-    # crop top images along bottom edge
-    top_left = np.delete(top_left, np.s_[min_height:], 0)
-    top_right = np.delete(top_right, np.s_[min_height:], 0)
-    assert(top_left.shape[0] == top_right.shape[0])
-    print('top height: {}'.format(top_left.shape[0]))
-
-    # crop right images along left edge
-    top_right = np.delete(top_right, np.s_[0:top_right.shape[1] - min_width], 1)
-    bottom_right = np.delete(bottom_right, np.s_[0:bottom_right.shape[1] - min_width], 1)
-    assert(top_right.shape[1] == bottom_right.shape[1])
-    print('right width: {}'.format(top_right.shape[1]))
-
-    # crop bottom images along top edge
-    bottom_left = np.delete(bottom_left, np.s_[0:bottom_left.shape[0] - min_height], 0)
-    bottom_right = np.delete(bottom_right, np.s_[0:bottom_right.shape[0] - min_height], 0)
-    assert(bottom_left.shape[0] == bottom_right.shape[0])
-    print('bottom height: {}'.format(bottom_left.shape[0]))
-
-    return top_left, top_right, bottom_left, bottom_right
 
 def get_min_dimensions(*images):
     # Get dimensions
@@ -108,16 +81,26 @@ def get_max_dimensions(*images):
     assert(max_width > 0 and max_height > 0)
     return (max_height, max_width)
 
-def match_images(top_left, top_right, bottom_left, bottom_right, scale_down=True):
+def scale_match_images(top_left, top_right, bottom_left, bottom_right, scale_down=True):
     # Crop images to square: should be roughly square to begin
     top_left, top_right, bottom_left, bottom_right = crop_images_to_square(top_left, top_right, bottom_left, bottom_right)
 
     # Get min/max size
     if scale_down:
-        scale_size = get_min_dimensions(top_left, top_right, bottom_left, bottom_right)[0]
+        scale_size = get_min_dimensions(top_left, top_right, bottom_left, bottom_right)
     else:
-        scale_size = get_max_dimensions(top_left, top_right, bottom_left, bottom_right)[0]
-    print('Scaled size: {}px'.format(scale_size))
+        scale_size = get_max_dimensions(top_left, top_right, bottom_left, bottom_right)
+    print('Scaled size: {}'.format(scale_size))
+
+    # scale images to scale_size
+    top_left = cv2.resize(top_left, scale_size)
+    top_right = cv2.resize(top_right, scale_size)
+    bottom_left = cv2.resize(bottom_left, scale_size)
+    bottom_right = cv2.resize(bottom_right, scale_size)
+    assert top_left.shape == top_right.shape == bottom_left.shape == bottom_right.shape
+    print("Scales match!")
+
+    return top_left, top_right, bottom_left, bottom_right
 
 def crop_images_to_square(top_left, top_right, bottom_left, bottom_right):
     # crop top left
@@ -166,9 +149,10 @@ def crop_edge(image, edge, cropped_px):
         image = np.delete(image, np.s_[image.shape[1] - cropped_px:], 1)
     return image
 
-match_images(tl, tr, bl, br)
-
 reconstruction = stitch_cropped_fragments(tl, tr, bl, br)
+cv2.imshow('Recon', reconstruction)
+cv2.waitKey(0)
+cv2.destroyAllWindows()
 # Test that the QR code reader can read this
 decoded_base_object = decode(Image.open('sample-images/qr-base.png'))
 decoded_base = int(decoded_base_object[0].data)
