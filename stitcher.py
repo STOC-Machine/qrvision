@@ -110,16 +110,14 @@ def get_max_dimensions(*images):
 
 def match_images(top_left, top_right, bottom_left, bottom_right, scale_down=True):
     # Crop images to square: should be roughly square to begin
-    crop_to_square(top_left)
-    crop_to_square(top_right)
-    crop_to_square(bottom_left)
-    crop_to_square(bottom_right)
+    top_left, top_right, bottom_left, bottom_right = crop_images_to_square(top_left, top_right, bottom_left, bottom_right)
 
     # Get min/max size
     if scale_down:
         scale_size = get_min_dimensions(top_left, top_right, bottom_left, bottom_right)[0]
     else:
-        scale_size = get_max_dimensions(top_left, top_right, bottom_left, bottom_right)
+        scale_size = get_max_dimensions(top_left, top_right, bottom_left, bottom_right)[0]
+    print('Scaled size: {}px'.format(scale_size))
 
 def crop_images_to_square(top_left, top_right, bottom_left, bottom_right):
     # crop top left
