@@ -148,20 +148,6 @@ def crop_images_to_square(top_left, top_right, bottom_left, bottom_right):
 
     return top_left, top_right, bottom_left, bottom_right
 
-def crop_to_square(image):
-    width = image.shape[1]
-    height = image.shape[0]
-
-    print('width {} height {}'.format(width, height))
-    if width < height:
-        height = width
-    else:
-        width = height
-
-    cv2.imshow('Corner squared', image)
-    cv2.waitKey(0)
-    cv2.destroyAllWindows()
-
 def remove_blocks_from_fragment(fragment, fragment_size_blocks, axis):
     width_px = fragment.shape[axis]
     block_width = int(width_px / fragment_size_blocks)
@@ -182,8 +168,7 @@ def crop_edge(image, edge, cropped_px):
         image = np.delete(image, np.s_[image.shape[1] - cropped_px:], 1)
     return image
 
-# match_images(tl, tr, bl, br)
-sq = crop_images_to_square(tl, tr, bl, br)
+match_images(tl, tr, bl, br)
 
 reconstruction = stitch_cropped_fragments(tl, tr, bl, br)
 # Test that the QR code reader can read this
