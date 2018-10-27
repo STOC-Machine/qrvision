@@ -36,21 +36,15 @@ def stitch_cropped_fragments(top_left, top_right, bottom_left, bottom_right):
     top_left, top_right, bottom_left, bottom_right = crop_images_to_size(top_left, top_right, bottom_left, bottom_right)
 
     # Stitch sides together
-    cropped = remove_from_fragment(top_right, 11, axis=1)
+    cropped = remove_blocks_from_fragment(top_right, 11, axis=1)
     top = np.concatenate((top_left, cropped), axis=1)
-    cropped = remove_from_fragment(bottom_right, 11, axis=1)
+    cropped = remove_blocks_from_fragment(bottom_right, 11, axis=1)
     bottom = np.concatenate((bottom_left, cropped), axis=1)
-    cv2.imshow('Top', top)
-    cv2.imshow('Bottom', bottom)
-    cv2.waitKey(0)
-    cv2.destroyAllWindows()
 
     # Stitch top and bottom together
-    cropped = remove_from_fragment(bottom, 11, axis=0)
+    cropped = remove_blocks_from_fragment(bottom, 11, axis=0)
     recon = np.concatenate((top, cropped), axis=0)
-    cv2.imshow('Complete', recon)
-    cv2.waitKey(0)
-    cv2.destroyAllWindows()
+    return recon
 
 def crop_images_to_size(top_left, top_right, bottom_left, bottom_right):
     min_dimensions = get_min_dimensions(top_left, top_right, bottom_left, bottom_right)
@@ -99,13 +93,102 @@ def get_min_dimensions(*images):
     assert(min_width > 0 and min_height > 0)
     return (min_height, min_width)
 
-def remove_from_fragment(fragment, width_blocks, axis):
+def get_max_dimensions(*images):
+    # Get dimensions
+    max_width = float('inf')
+    max_height = float('inf')
+    for image in images:
+        width = image.shape[1]
+        if width > max_width:
+            max_width = width
+        height = image.shape[0]
+        if height > max_height:
+            max_height = height
+    assert(min_width != float('inf') and min_height != float('inf'))
+    assert(min_width > 0 and min_height > 0)
+    return (min_height, min_width)
+
+def match_images(top_left, top_right, bottom_left, bottom_right, scale_down=True):
+    # Crop images to square: should be roughly square to begin
+    crop_to_square(top_left)
+    crop_to_square(top_right)
+    crop_to_square(bottom_left)
+    crop_to_square(bottom_right)
+
+    # Get min/max size
+    if scale_down:
+        scale_size = get_min_dimensions(top_left, top_right, bottom_left, bottom_right)[0]
+    else:
+        scale_size = get_max_dimensions(top_left, top_right, bottom_left, bottom_right)
+
+def crop_images_to_square(top_left, top_right, bottom_left, bottom_right):
+    # crop top left
+    square_size = min(top_left.shape)
+    top_left = crop_edge(top_left, 'bottom', top_left.shape[0] - square_size)
+    top_left = crop_edge(top_left, 'right', top_left.shape[1] - square_size)
+    assert top_left.shape[1] == top_left.shape[0]
+
+    # crop top right
+    square_size = min(top_right.shape)
+    top_right = crop_edge(top_right, 'bottom', top_right.shape[0] - square_size)
+    top_right = crop_edge(top_right, 'left', top_right.shape[1] - square_size)
+    assert top_right.shape[1] == top_right.shape[0]
+
+    # crop bottom left
+    square_size = min(bottom_left.shape)
+    bottom_left = crop_edge(bottom_left, 'top', bottom_left.shape[0] - square_size)
+    bottom_left = crop_edge(bottom_left, 'right', bottom_left.shape[1] - square_size)
+    assert bottom_left.shape[1] == bottom_left.shape[0]
+
+    # crop bottom left
+    square_size = min(bottom_right.shape)
+    bottom_right = crop_edge(bottom_right, 'top', bottom_right.shape[0] - square_size)
+    bottom_right = crop_edge(bottom_right, 'left', bottom_right.shape[1] - square_size)
+    assert bottom_right.shape[1] == bottom_right.shape[0]
+
+    return top_left, top_right, bottom_left, bottom_right
+
+def crop_to_square(image):
+    width = image.shape[1]
+    height = image.shape[0]
+
+    print('width {} height {}'.format(width, height))
+    if width < height:
+        height = width
+    else:
+        width = height
+
+    cv2.imshow('Corner squared', image)
+    cv2.waitKey(0)
+    cv2.destroyAllWindows()
+
+def remove_blocks_from_fragment(fragment, fragment_size_blocks, axis):
     width_px = fragment.shape[axis]
-    block_width = int(width_px / width_blocks)
+    block_width = int(width_px / fragment_size_blocks)
     return np.delete(fragment, np.s_[0:block_width], axis)
 
-stitch_cropped_fragments(tl, tr, bl, br)
+def crop_edge(image, edge, cropped_px):
+    if edge == 'top':
+        # Vertical axis: 0; delete pixels before cropped_px
+        image = np.delete(image, np.s_[0:cropped_px], 0)
+    elif edge == 'bottom':
+        # Vertical axis: 0; delete pixels before height - cropped_px
+        image = np.delete(image, np.s_[image.shape[0] - cropped_px:], 0)
+    elif edge == 'left':
+        # Horizontal axis: 1; delete pixels before cropped_px
+        image = np.delete(image, np.s_[0:cropped_px], 1)
+    elif edge == 'right':
+        # Horizontal axis: 1; delete pixels after width - cropped_px
+        image = np.delete(image, np.s_[image.shape[1] - cropped_px:], 1)
+    return image
+
+# match_images(tl, tr, bl, br)
+sq = crop_images_to_square(tl, tr, bl, br)
+
+reconstruction = stitch_cropped_fragments(tl, tr, bl, br)
 # Test that the QR code reader can read this
 decoded_base_object = decode(Image.open('sample-images/qr-base.png'))
 decoded_base = int(decoded_base_object[0].data)
-assert decoded_base == 2468, 'QR Code not readable: {}'.format(decoded_base)
+assert decoded_base == 2468, 'Base QR Code not readable: {}'.format(decoded_base)
+decoded_recon = int(decode(reconstruction)[0].data)
+assert decoded_base == decoded_recon, 'Reconstruction not readable: sould be {}, returns {}'.format(decoded_base, decoded_recon)
