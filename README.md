@@ -1,2 +1,4 @@
 # qrvision
-Assembles QR code fragments
+Assembles and decodes QR code fragments
+
+![Fancy QR Code](hero.png?raw=true)
