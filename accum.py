@@ -63,6 +63,15 @@ while len(files) > 0:
     cv2.imshow("Accum", accumulated.astype(np.uint8))
     enhanced = hough_parallelogram.enhance(accumulated, 10, 10)
     cv2.imshow("Enhanced", enhanced.astype(np.uint8))
+    print("Max element in enhanced: {}".format(np.amax(enhanced)))
+    
+    # Test findPeaks
+    peaks = hough_parallelogram.findPeaks(enhanced, 120)
+    print("Number of peaks: {}".format(len(peaks)))
+    for peak in peaks:
+        rho = peak[0]
+        theta = peak[1]
+        print("Peak: rho {}, theta {}, height {}".format(rho, theta, enhanced[rho][theta]))
     
     # Wait for keypress to continue, close old windows
     cv2.waitKey(0)
