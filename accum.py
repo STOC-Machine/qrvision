@@ -16,8 +16,7 @@ def accumulate(image, theta_buckets,rho_buckets):
             print(iterator.multi_index)
             for i in range(0,theta_buckets):
                 theta=(2*np.pi*i)/(1.0*theta_buckets)
-                rho=(iterator.multi_index[0]*math.cos(theta))+(iterator.multi_index[1]*math.sin(theta))
-                #rho=iterator.multi_index[0]*math.cos(theta)
+                rho=(iterator.multi_index[1]*math.cos(theta))+(iterator.multi_index[0]*math.sin(theta))
                 j=int((rho+max_rho)/(2*max_rho/(1.0*rho_buckets)))
                 accum[j][i]+=1
         iterator.iternext()
