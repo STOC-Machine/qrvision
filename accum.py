@@ -38,7 +38,7 @@ while len(files) > 0:
         maximum=np.amax(accumulated)
         
         accumimage=(255.0/maximum)*accumulated
-        cv2.imwrite("Accum.jpg",accumimage.astype(np.uint8))
+        cv2.imshow("Accum",accumimage.astype(np.uint8))
         # Wait for keypress to continue, close old windows
         cv2.waitKey(0)
         cv2.destroyAllWindows()
