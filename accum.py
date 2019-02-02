@@ -3,6 +3,7 @@ import glob
 import numpy as np
 import sys
 import math
+import hough_parallelogram
 
 """
 Generates the Hough accumulator array for the given image.
@@ -59,7 +60,9 @@ while len(files) > 0:
     
     # Run accumulator
     accumimage = (255.0 / maximum) * accumulated
-    cv2.imshow("Accum", accumimage.astype(np.uint8))
+    cv2.imshow("Accum", accumulated.astype(np.uint8))
+    enhanced = hough_parallelogram.enhance(accumulated, 10, 10)
+    cv2.imshow("Enhanced", enhanced.astype(np.uint8))
     
     # Wait for keypress to continue, close old windows
     cv2.waitKey(0)
