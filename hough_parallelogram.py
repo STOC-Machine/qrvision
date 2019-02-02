@@ -31,6 +31,7 @@ def enhance(acc, h, w):
     
     return enhanced
 
+# Based on the OpenCV implementation: hough.cpp, line 84
 def is_peak(acc, rho_index, theta_index, peak_thresh):
     if acc[rho_index, theta_index] < peak_thresh:
         return False
