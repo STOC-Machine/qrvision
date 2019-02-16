@@ -1,33 +1,25 @@
 import numpy as np
+import cv2
 
 #section 1:find parallelograms in image
-def accumulator():
-    return
 def enhance(acc, h, w):
-    enhanced = np.copy(acc)
-    
-    # Outer loop: go by blocks
-    minRho = minTheta = 0
-    maxRho = h - 1
-    maxTheta = w - 1
-    while acc.shape[0] > maxRho:
-        while acc.shape[1] > maxTheta:
-            # get sum of region
-            sum = 0
-            for rho in range(minRho, maxRho):
-                for theta in range(minTheta, maxTheta):
-                    sum = sum + acc[rho][theta]
-            
-            if sum != 0:
-                # Inner loop: element by element in the region and save to enhanced
-                for rho in range(minRho, maxRho):
-                    for theta in range(minTheta, maxTheta):
-                        numerator = h * w * acc[rho][theta]
-                        enhanced[rho][theta] = numerator / sum
-            minTheta += w
-            maxTheta += w
-        minRho += h
-        maxRho += h
+    # Sums up h x w region around every pixel:
+    # this is the "rectangular convolution" the paper mentioned.
+    # This saves the sum result about each pixel to the matrix dst.
+    convolution_matrix = np.ones((h, w))
+    dst = cv2.filter2D(acc, -1, convolution_matrix)
+
+    enhanced = np.zeros(acc.shape)
+    # Now find the enhanced values at each pixel of the accumulator
+    # using the convolved matrix
+    # This is probably not the most efficient way, we could probably numpify it
+    for rho in range(0, acc.shape[0]):
+        for theta in range(0, acc.shape[1]):
+            if dst[rho][theta] != 0:
+                numerator = h * w * (acc[rho][theta]**2)
+                enhanced[rho][theta] = (1.0 * numerator) / dst[rho][theta]
+            # Otherwise, the value should be 0.
+            # Since I initialized the enhanced array to zeros, do nothing.
     
     return enhanced
 

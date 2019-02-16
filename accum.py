@@ -34,7 +34,6 @@ def accumulate(image, theta_buckets, rho_buckets):
     iterator = np.nditer(image, flags=['multi_index'])
     while(not iterator.finished):
         if(iterator[0] != 0):
-            print(iterator.multi_index)
             for i in range(0, theta_buckets):
                 theta = (2 * np.pi * i) / (1.0 * theta_buckets)
                 rho = (iterator.multi_index[1] * math.cos(theta)) + (iterator.multi_index[0] * math.sin(theta))
@@ -61,14 +60,17 @@ while len(files) > 0:
     # Run accumulator
     accumimage = (255.0 / maximum) * accumulated
     cv2.imshow("Accum", accumulated.astype(np.uint8))
-    cv2.imwrite("accum.jpg",accumimage.astype(np.uint8))
-    enhanced = hough_parallelogram.enhance(accumulated, 10, 10)
-    cv2.imshow("Enhanced", enhanced.astype(np.uint8))
-    cv2.imwrite("enhaced.jpg",accumimage.astype(np.uint8))
+    cv2.imwrite("accum.jpg", accumimage.astype(np.uint8))
+
+    # Run enhancement
+    enhanced = hough_parallelogram.enhance(accumulated, 20, 20)
+    enhanceimage = (255.0 / np.amax(enhanced)) * enhanced
+    cv2.imshow("Enhanced", enhanceimage.astype(np.uint8))
+    cv2.imwrite("enhaced.jpg", enhanceimage.astype(np.uint8))
     print("Max element in enhanced: {}".format(np.amax(enhanced)))
     
     # Test findPeaks
-    peaks = hough_parallelogram.findPeaks(enhanced, 120)
+    peaks = hough_parallelogram.findPeaks(enhanced, 1000)
     print("Number of peaks: {}".format(len(peaks)))
     for peak in peaks:
         rho = peak[0]
