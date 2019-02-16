@@ -61,8 +61,10 @@ while len(files) > 0:
     # Run accumulator
     accumimage = (255.0 / maximum) * accumulated
     cv2.imshow("Accum", accumulated.astype(np.uint8))
+    cv2.imwrite("accum.jpg",accumimage.astype(np.uint8))
     enhanced = hough_parallelogram.enhance(accumulated, 10, 10)
     cv2.imshow("Enhanced", enhanced.astype(np.uint8))
+    cv2.imwrite("enhaced.jpg",accumimage.astype(np.uint8))
     print("Max element in enhanced: {}".format(np.amax(enhanced)))
     
     # Test findPeaks
