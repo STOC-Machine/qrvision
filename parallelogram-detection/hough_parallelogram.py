@@ -20,14 +20,14 @@ def enhance(acc, h, w):
                 enhanced[rho][theta] = (1.0 * numerator) / dst[rho][theta]
             # Otherwise, the value should be 0.
             # Since I initialized the enhanced array to zeros, do nothing.
-    
+
     return enhanced
 
 # Based on the OpenCV implementation: hough.cpp, line 84
 def is_peak(acc, rho_index, theta_index, peak_thresh):
     if acc[rho_index, theta_index] < peak_thresh:
         return False
-    
+
     # Check that acc[rho_index, theta_index] is greater than all neighboring values,
     # making sure that we don't go outside array bounds
     # Check vertical
@@ -75,8 +75,18 @@ def findPeaks(acc, peak_thresh):
                 peaks.append([rho, theta])
     return peaks
 
-def findPeakPairs():
-    return
+def findPeakPairs(peaks, acc, angle_thresh, pixel_thresh):
+    peakPairs = []
+    for i in range(0, len(peaks)):
+        for j in range(i+1, len(peaks)):
+            cur1 = acc[peaks[i][0]][peaks[i][1]]
+            cur2 = acc[peaks[j][0]][peaks[j][1]]
+            if abs(peaks[i][1]-peaks[j][1]) < angle_thresh:
+                if abs(cur1-cur2) < (pixel_thresh * (cur1 + cur2)/2):
+                    peakPairs.append([[peaks[i][0], peaks[i][1],cur1],[peaks[j][0],peaks[j1],cur2])
+    return peakPairs
+    #y coordinate is close to each other, and value in acc is close
+    #return a list of pairs of lists (rho, theta, height2)
 
 def findParallelograms(peakPairs):
     return
