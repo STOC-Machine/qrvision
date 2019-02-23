@@ -83,7 +83,7 @@ def findPeakPairs(peaks, acc, angle_thresh, pixel_thresh):
             cur2 = acc[peaks[j][0]][peaks[j][1]]
             if abs(peaks[i][1]-peaks[j][1]) < angle_thresh:
                 if abs(cur1-cur2) < (pixel_thresh * (cur1 + cur2)/2):
-                    peakPairs.append([[peaks[i][0], peaks[i][1],cur1],[peaks[j][0],peaks[j][1],cur2])
+                    peakPairs.append([[peaks[i][0], peaks[i][1],cur1],[peaks[j][0],peaks[j][1],cur2]])
     return peakPairs
     #y coordinate is close to each other, and value in acc is close
     #return a list of pairs of lists (rho, theta, height2)
