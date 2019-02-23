@@ -88,15 +88,16 @@ def findPeakPairs(peaks, acc, angle_thresh, pixel_thresh):
     #y coordinate is close to each other, and value in acc is close
     #return a list of pairs of lists (rho, theta, height2)
 
-def findParallelograms(acc, peak_pairs, pixel_thresh):
+def findParallelograms(peak_pairs, acc, pixel_thresh):
     # peakPairs input format:
     # [pair1: [rho, theta, height], pair2: ...]
+    print("peakPairs:\n{}".format(peak_pairs))
 
     pair_averages = [];
     # find average rho, theta for the pairs:
-    for pair in peakPairs:
-        theta_p = average(pair[0][1], pair[[1][1]])
-        c_p = average(pair[0][2], pair[1][2])
+    for pair in peak_pairs:
+        theta_p = (pair[0][1] + pair[1][1]) / 2.0
+        c_p = (pair[0][2] + pair[1][2]) / 2.0
         pair_averages.append([theta_p, c_p])
 
     parallelograms = []
@@ -109,8 +110,8 @@ def findParallelograms(acc, peak_pairs, pixel_thresh):
             average_l = pair_averages[j]
 
             # eta = abs(rho_k^2 - rho_l^2)
-            delta_rho_k = abs(peak1[0][0]**2 - peak1[1][0]**2)
-            delta_rho_l = abs(peak2[0][0]**2 - peak2[1][0]**2)
+            delta_rho_k = abs(peak_k[0][0]**2 - peak_k[1][0]**2)
+            delta_rho_l = abs(peak_l[0][0]**2 - peak_l[1][0]**2)
 
             alpha = average_k[0] - average_l[0]
 
@@ -121,8 +122,5 @@ def findParallelograms(acc, peak_pairs, pixel_thresh):
                 parallelograms.append([peak_k, peak_l])
 
     return parallelograms
-
-
-
 
 #tiling

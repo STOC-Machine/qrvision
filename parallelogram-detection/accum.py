@@ -35,7 +35,7 @@ def accumulate(image, theta_buckets, rho_buckets):
     while(not iterator.finished):
         if(iterator[0] != 0):
             for i in range(0, theta_buckets):
-                theta = (2 * np.pi * i) / (1.0 * theta_buckets)
+                theta = (np.pi * i) / (1.0 * theta_buckets)
                 rho = (iterator.multi_index[1] * math.cos(theta)) + (iterator.multi_index[0] * math.sin(theta))
                 j = int((rho + max_rho) / (2 * max_rho / (1.0 * rho_buckets)))
                 accum[j][i] += 1
@@ -76,6 +76,18 @@ while len(files) > 0:
         rho = peak[0]
         theta = peak[1]
         print("Peak: rho {}, theta {}, height {}".format(rho, theta, enhanced[rho][theta]))
+
+    # Test findParallelograms
+    peak_pairs = hough_parallelogram.findPeakPairs(peaks, accumulated, 3.0, 0.3)
+    parallelograms = hough_parallelogram.findParallelograms(peak_pairs, accumulated, 0.3)
+    print("Number of parallelograms: {}".format(len(parallelograms)))
+    for parallelogram in parallelograms:
+        rho0 = parallelogram[0][0]
+        theta0 = parallelogram[0][1]
+        rho1 = parallelogram[1][0]
+        theta1 = parallelogram[1][1]
+        print("Peak 1: rho {}, theta {}, height {}".format(rho0, theta0, enhanced[rho][theta]))
+        print("Peak 2: rho {}, theta {}, height {}".format(rho1, theta1, enhanced[rho][theta]))
     
     # Wait for keypress to continue, close old windows
     cv2.waitKey(0)
