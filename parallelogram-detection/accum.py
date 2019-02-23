@@ -70,7 +70,7 @@ while len(files) > 0:
     print("Max element in enhanced: {}".format(np.amax(enhanced)))
     
     # Test findPeaks
-    peaks = hough_parallelogram.findPeaks(enhanced, 1000)
+    peaks = hough_parallelogram.findPeaks(enhanced, 700)
     print("Number of peaks: {}".format(len(peaks)))
     for peak in peaks:
         rho = peak[0]
@@ -78,16 +78,21 @@ while len(files) > 0:
         print("Peak: rho {}, theta {}, height {}".format(rho, theta, enhanced[rho][theta]))
 
     # Test findParallelograms
-    peak_pairs = hough_parallelogram.findPeakPairs(peaks, accumulated, 3.0, 0.3)
-    parallelograms = hough_parallelogram.findParallelograms(peak_pairs, accumulated, 0.3)
+    max_rho = math.sqrt((edges.shape[0] * edges.shape[0]) + (edges.shape[1] * edges.shape[1]))
+    peak_pairs = hough_parallelogram.findPeakPairs(peaks, accumulated, 3.0, 0.3, max_rho, 50, 50)
+    print("Number of peak pairs: {}".format(len(peak_pairs)))
+    parallelograms = hough_parallelogram.findParallelograms(peak_pairs, accumulated, 0.7)
     print("Number of parallelograms: {}".format(len(parallelograms)))
     for parallelogram in parallelograms:
         rho0 = parallelogram[0][0]
         theta0 = parallelogram[0][1]
         rho1 = parallelogram[1][0]
         theta1 = parallelogram[1][1]
-        print("Peak 1: rho {}, theta {}, height {}".format(rho0, theta0, enhanced[rho][theta]))
-        print("Peak 2: rho {}, theta {}, height {}".format(rho1, theta1, enhanced[rho][theta]))
+        # print("Peak 1: rho {}, theta {}, height {}".format(rho0, theta0, enhanced[rho][theta]))
+        # print("Peak 2: rho {}, theta {}, height {}".format(rho1, theta1, enhanced[rho][theta]))
+        # print(parallelogram)
+        
+        hough_parallelogram.find_parallelogram_vertices(parallelogram, max_rho, 50, 50)
     
     # Wait for keypress to continue, close old windows
     cv2.waitKey(0)
