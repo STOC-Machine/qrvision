@@ -78,7 +78,23 @@ def findPeaks(acc, peak_thresh):
 def findPeakPairs():
     return
 
-def findParallelograms(peakPairs):
+def findParallelograms(acc, peak_pairs):
+    # peakPairs input format:
+    # [pair1: [rho, theta, height], pair2: ...]
+    
+    pair_averages = [];
+    # find average rho, theta for the pairs:
+    for pair in peakPairs:
+        theta_p = average(pair[0][1], pair[[1][1]])
+        c_p = average(pair[0][2], pair[1][2])
+        pair_averages.append([theta_p, c_p])
+    
+    # foreach pair of pairs:
+    for i in range(0, len(peakPairs)):
+        for j in range(0, len(peakPairs)):
+            if i != j:
+                peak1 = peakPairs[i]
+                peak2 = peakPairs[j]
     return
 
 
