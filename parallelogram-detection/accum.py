@@ -11,8 +11,8 @@ The lines are defined by the point in the image (ie, the pixel indices of the im
 and the angle from the vertical, clockwise.
 
 The array is in a polar coordinate system based on the normal vector to the line.
-The vertical (first) index is the magnitude of that vector.
-The horizontal (second) index is the polar angle of the vector, clockwise from the horizontal.
+The vertical (first) index is the magnitude of that vector rho.
+The horizontal (second) index is the polar angle of the vector theta, clockwise from the horizontal.
 
 TODO: change angle from going up to 2*pi. A line at theta=pi/2 is the same as one at 3*pi/2.
 
@@ -30,17 +30,41 @@ def accumulate(image, theta_buckets, rho_buckets):
     accum = np.zeros((rho_buckets, theta_buckets))
     
     max_rho = math.sqrt((image.shape[0] * image.shape[0]) + (image.shape[1] * image.shape[1]))
+    max_rho = image.shape[0] + image.shape[1]
     
     iterator = np.nditer(image, flags=['multi_index'])
     while(not iterator.finished):
         if(iterator[0] != 0):
             for i in range(0, theta_buckets):
-                theta = (np.pi * i) / (1.0 * theta_buckets)
+                theta = np.pi * (1.0 * i / theta_buckets)
                 rho = (iterator.multi_index[1] * math.cos(theta)) + (iterator.multi_index[0] * math.sin(theta))
-                j = int((rho + max_rho) / (2 * max_rho / (1.0 * rho_buckets)))
+                j = round((rho + max_rho) / (2 * max_rho / (1.0 * rho_buckets)))
                 accum[j][i] += 1
         iterator.iternext()
     return accum
+
+def get_x(rho, theta, y):
+    return (rho / np.cos(theta)) - (y * np.tan(theta))
+
+def get_accum_endpoints(acc, peak, dim):
+    rho = hough_parallelogram.convert_rho(peak[0], max_rho, 500)
+    theta = hough_parallelogram.convert_angle(peak[1], 100)
+
+    if theta == np.pi / 2:
+        left = (0, int(rho))
+        right = (dim[1], int(rho))
+        return left, right
+
+    x_top = int(get_x(rho, theta, 0))
+    x_bottom = int(get_x(rho, theta, dim[0]))
+
+    top = (x_top, 0)
+    bottom = (x_bottom, dim[0])
+    return top, bottom
+
+max_rho = 0
+rho_buckets = 500
+theta_buckets = 100
 
 files = glob.glob(sys.argv[1])
 while len(files) > 0:
@@ -54,7 +78,7 @@ while len(files) > 0:
     cv2.imshow("Original", img)
     edges = cv2.Canny(img, 100, 100)
     cv2.imshow("Edges", edges)
-    accumulated = accumulate(edges, 50, 50)
+    accumulated = accumulate(edges, theta_buckets, rho_buckets)
     maximum = np.amax(accumulated)
     
     # Run accumulator
@@ -70,16 +94,20 @@ while len(files) > 0:
     print("Max element in enhanced: {}".format(np.amax(enhanced)))
     
     # Test findPeaks
-    peaks = hough_parallelogram.findPeaks(enhanced, 700)
+    max_rho = img.shape[0] + img.shape[1]
+    peaks = hough_parallelogram.findPeaks(enhanced, 500)
     print("Number of peaks: {}".format(len(peaks)))
     for peak in peaks:
         rho = peak[0]
         theta = peak[1]
-        print("Peak: rho {}, theta {}, height {}".format(rho, theta, enhanced[rho][theta]))
+        print("Peak: rho {}, theta {}, height {}".format(rho, theta, accumulated[rho][theta]))
+
+        top_point, bottom_point = get_accum_endpoints(accumulated, peak, edges.shape)
+        cv2.line(edges, top_point, bottom_point, (255, 0, 0))
+    cv2.imshow("Edges with lines", edges)
 
     # Test findParallelograms
-    max_rho = math.sqrt((edges.shape[0] * edges.shape[0]) + (edges.shape[1] * edges.shape[1]))
-    peak_pairs = hough_parallelogram.findPeakPairs(peaks, accumulated, 3.0, 0.3, max_rho, 50, 50)
+    peak_pairs = hough_parallelogram.findPeakPairs(peaks, accumulated, 3.0, 0.3, max_rho, rho_buckets, theta_buckets)
     print("Number of peak pairs: {}".format(len(peak_pairs)))
     parallelograms = hough_parallelogram.findParallelograms(peak_pairs, accumulated, 0.7)
     print("Number of parallelograms: {}".format(len(parallelograms)))
@@ -92,7 +120,7 @@ while len(files) > 0:
         # print("Peak 2: rho {}, theta {}, height {}".format(rho1, theta1, enhanced[rho][theta]))
         # print(parallelogram)
         
-        hough_parallelogram.find_parallelogram_vertices(parallelogram, max_rho, 50, 50)
+        hough_parallelogram.find_parallelogram_vertices(parallelogram, max_rho, rho_buckets, theta_buckets)
     
     # Wait for keypress to continue, close old windows
     cv2.waitKey(0)
