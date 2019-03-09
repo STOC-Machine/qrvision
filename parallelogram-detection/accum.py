@@ -47,8 +47,10 @@ def get_x(rho, theta, y):
     return (rho / np.cos(theta)) - (y * np.tan(theta))
 
 def get_accum_endpoints(acc, peak, dim):
-    rho = hough_parallelogram.convert_rho(peak[0], max_rho, 500)
-    theta = hough_parallelogram.convert_angle(peak[1], 100)
+    # rho = hough_parallelogram.convert_rho(peak[0], max_rho, 500)
+    # theta = hough_parallelogram.convert_angle(peak[1], 100)
+    rho = peak[0]
+    theta = peak[1]
 
     if theta == np.pi / 2:
         left = (0, int(rho))
@@ -61,10 +63,48 @@ def get_accum_endpoints(acc, peak, dim):
     top = (x_top, 0)
     bottom = (x_bottom, dim[0])
     return top, bottom
+    
+def generate_color_spectrum(iteration):
+    hue = 180 - (2 * iteration)
+    color = np.uint8([[[hue, 255, 255]]])
+    rgb = cv2.cvtColor(color, cv2.COLOR_HSV2BGR)[0][0]
+    return (np.asscalar(rgb[0]), np.asscalar(rgb[1]), np.asscalar(rgb[2]))
+
+def ave_peak_height(pair):
+    return (pair[0][2] + pair[1][2]) / 2.0
+
+def draw_lines(image, accum, peaks, color, title):
+    for peak in peaks:
+        top_point, bottom_point = get_accum_endpoints(accum, peak, image.shape)
+        # print("Point: {} {}".format(top_point, bottom_point))
+        cv2.line(image, top_point, bottom_point, color)
+    return image
+
+def draw_pairs(image, accum, pairs):
+    pairs.sort(key=ave_peak_height, reverse=True)
+    iter = 0
+    for pair in pairs:
+        draw_image = np.zeros((image.shape[0], image.shape[1], 3))
+        draw_image = draw_lines(draw_image, accum, pair, generate_color_spectrum(iter), "Pair 1")
+        image = draw_lines(image, accum, pair, generate_color_spectrum(iter), "Pair 1")
+        iter = iter + 1
+        # cv2.destroyWindow("Pair {}".format(iter))
+        # cv2.imshow("Pair 1", draw_image)
+        # cv2.waitKey(0)
+    cv2.imshow("Pairs", image)
+
+def draw_parallelograms(image, accum, ps, title):
+    iter = 0
+    for parallelogram in ps:
+        color = generate_color_spectrum(iter)
+        iter = iter + 1
+        for pair in parallelogram:
+            image = draw_lines(image, accum, pair, color, "Pair 1")
+    cv2.imshow(title, image)
 
 max_rho = 0
 rho_buckets = 500
-theta_buckets = 100
+theta_buckets = 200
 
 files = glob.glob(sys.argv[1])
 while len(files) > 0:
@@ -97,30 +137,32 @@ while len(files) > 0:
     max_rho = img.shape[0] + img.shape[1]
     peaks = hough_parallelogram.findPeaks(enhanced, 500)
     print("Number of peaks: {}".format(len(peaks)))
-    for peak in peaks:
-        rho = peak[0]
-        theta = peak[1]
-        print("Peak: rho {}, theta {}, height {}".format(rho, theta, accumulated[rho][theta]))
+    # for peak in peaks:
+    #     rho = peak[0]
+    #     theta = peak[1]
+    #     print("Peak: rho {}, theta {}, height {}".format(rho, theta, accumulated[rho][theta]))
+        
+    lines_image = np.zeros((edges.shape[0], edges.shape[1], 3))
+    # draw_lines(lines_image, accumulated, peaks, (255, 0, 0), "Hough lines")
 
-        top_point, bottom_point = get_accum_endpoints(accumulated, peak, edges.shape)
-        cv2.line(edges, top_point, bottom_point, (255, 0, 0))
-    cv2.imshow("Edges with lines", edges)
-
-    # Test findParallelograms
-    peak_pairs = hough_parallelogram.findPeakPairs(peaks, accumulated, 3.0, 0.3, max_rho, rho_buckets, theta_buckets)
+    peak_pairs = hough_parallelogram.findPeakPairs(peaks, accumulated, 3.0, 0.3, 0.3, max_rho, rho_buckets, theta_buckets)
     print("Number of peak pairs: {}".format(len(peak_pairs)))
-    parallelograms = hough_parallelogram.findParallelograms(peak_pairs, accumulated, 0.7)
+    
+    pairs_image = np.zeros((edges.shape[0], edges.shape[1], 3))
+    draw_pairs(pairs_image, accumulated, peak_pairs)
+    
+    # Test findParallelograms
+    parallelograms = hough_parallelogram.findParallelograms(peak_pairs, accumulated, 0.7, np.pi / 6)
     print("Number of parallelograms: {}".format(len(parallelograms)))
     for parallelogram in parallelograms:
         rho0 = parallelogram[0][0]
         theta0 = parallelogram[0][1]
         rho1 = parallelogram[1][0]
         theta1 = parallelogram[1][1]
-        # print("Peak 1: rho {}, theta {}, height {}".format(rho0, theta0, enhanced[rho][theta]))
-        # print("Peak 2: rho {}, theta {}, height {}".format(rho1, theta1, enhanced[rho][theta]))
-        # print(parallelogram)
         
-        hough_parallelogram.find_parallelogram_vertices(parallelogram, max_rho, rho_buckets, theta_buckets)
+        # hough_parallelogram.find_parallelogram_vertices(parallelogram, max_rho, rho_buckets, theta_buckets)
+    
+    draw_parallelograms(lines_image, accumulated, parallelograms, "Parallelograms")
     
     # Wait for keypress to continue, close old windows
     cv2.waitKey(0)
