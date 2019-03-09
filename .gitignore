@@ -2,3 +2,4 @@ sample-images/
 .idea
 __pycache__/
 *.pyc
+parallelogram-detection/*.jpg
