@@ -115,7 +115,7 @@ while len(files) > 0:
         print('Error: could not read image file {}, skipping.'.format(file))
         continue
     
-    cv2.imshow("Original", img)
+    # cv2.imshow("Original", img)
     edges = cv2.Canny(img, 100, 100)
     cv2.imshow("Edges", edges)
     accumulated = accumulate(edges, theta_buckets, rho_buckets)
@@ -123,13 +123,13 @@ while len(files) > 0:
     
     # Run accumulator
     accumimage = (255.0 / maximum) * accumulated
-    cv2.imshow("Accum", accumulated.astype(np.uint8))
+    # cv2.imshow("Accum", accumulated.astype(np.uint8))
     cv2.imwrite("accum.jpg", accumimage.astype(np.uint8))
 
     # Run enhancement
     enhanced = hough_parallelogram.enhance(accumulated, 20, 20)
     enhanceimage = (255.0 / np.amax(enhanced)) * enhanced
-    cv2.imshow("Enhanced", enhanceimage.astype(np.uint8))
+    # cv2.imshow("Enhanced", enhanceimage.astype(np.uint8))
     cv2.imwrite("enhaced.jpg", enhanceimage.astype(np.uint8))
     print("Max element in enhanced: {}".format(np.amax(enhanced)))
     
@@ -149,7 +149,7 @@ while len(files) > 0:
     print("Number of peak pairs: {}".format(len(peak_pairs)))
     
     pairs_image = np.zeros((edges.shape[0], edges.shape[1], 3))
-    draw_pairs(pairs_image, accumulated, peak_pairs)
+    # draw_pairs(pairs_image, accumulated, peak_pairs)
     
     # Test findParallelograms
     parallelograms = hough_parallelogram.findParallelograms(peak_pairs, accumulated, 0.7, np.pi / 6)
@@ -159,10 +159,14 @@ while len(files) > 0:
         theta0 = parallelogram[0][1]
         rho1 = parallelogram[1][0]
         theta1 = parallelogram[1][1]
-        
-        # hough_parallelogram.find_parallelogram_vertices(parallelogram, max_rho, rho_buckets, theta_buckets)
+
+    edges_0 = hough_parallelogram.find_parallelogram_edges(parallelograms[0], max_rho, rho_buckets, theta_buckets)
+
+    for parallelogram in parallelograms:
+        hough_parallelogram.validate_parallelogram(edges, parallelogram, max_rho, rho_buckets, theta_buckets, 0.3)
+        cv2.waitKey(0)
     
-    draw_parallelograms(lines_image, accumulated, parallelograms, "Parallelograms")
+    # print(draw_parallelograms(lines_image, accumulated, parallelograms, "Parallelograms"))
     
     # Wait for keypress to continue, close old windows
     cv2.waitKey(0)

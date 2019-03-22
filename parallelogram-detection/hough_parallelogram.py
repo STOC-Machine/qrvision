@@ -144,7 +144,11 @@ def findParallelograms(peak_pairs, acc, pixel_thresh, parallel_angle_thresh):
 
     return parallelograms
 
-def find_actual_perimeter(edge_image, parallelogram, max_rho, rho_buckets):
+def find_actual_perimeter(edge_image, parallelogram, max_rho, rho_buckets, theta_buckets):
+    test_image = np.zeros((edge_image.shape[0], edge_image.shape[1], 3))
+    test_overlay = cv2.cvtColor(edge_image, cv2.COLOR_GRAY2BGR)
+    colors = ((255, 255, 255), (255, 0, 0), (0, 0, 255), (0, 255, 0))
+
     # Loop along each pixel of each edge of the parallelogram,
     # as defined by our accumulator method.
     # If the pixel is on, add 1 to the perimeter.
@@ -152,38 +156,106 @@ def find_actual_perimeter(edge_image, parallelogram, max_rho, rho_buckets):
     # with the lit pixels almost exactly and the actual perimeter returned
     # by this function should match the length of the accumulator lines almost
     # exactly. 
+    
+    peak_k = parallelogram[0]
+    peak_l = parallelogram[1]
+    
+    rho_k_0 = peak_k[0][0]
+    theta_k_0 = peak_k[0][1]
+    rho_k_1 = peak_k[1][0]
+    theta_k_1 = peak_k[1][1]
+    rho_l_0 = peak_l[0][0]
+    theta_l_0 = peak_l[0][1]
+    rho_l_1 = peak_l[1][0]
+    theta_l_1 = peak_l[1][1]
 
-    vert0, vert1, vert2, vert3 = find_parallelogram_vertices(parallelogram, max_rho, rho_buckets, theta_buckets)
+    # Returned in format: [x, y]
+    vertices = find_parallelogram_vertices(parallelogram, max_rho, rho_buckets, theta_buckets)
 
     perimeter = 0
     # For each segment on the parallelogram:
     # This is a pair of sequential vertices:
     # 0, 1; 1, 2; 2, 3; 3, 0
+    for i in range(0, 4):
+        # Get the index of the second vertex: wraps back to 0 after 3
+        j = (i + 1) % 4;
+        vert0 = vertices[i]
+        vert1 = vertices[j]
+        rho = edges[i][0]
+        theta = edges[i][1]
 
-    # Loop the y coordinate in the range of y values included:
-    # for instance, `for y in range(vert0[1], vert1[1])`
-    # Use the formula for x from get_x in accum.py: 
-    #   (rho / np.cos(theta)) - (y * np.tan(theta))
-    # This gives us the x, y coordinate to check.
-    # Perform the check at this pixel in the image
-    # If the pixel is on, add 1 to perimeter
+        # Check that all vertices are actually in the image.
+        # If they're not, this can't be a valid parallelogram in the image
+        if vert0[0] < 0 or vert0[0] >= edge_image.shape[1]:
+            return False
+        if vert0[1] < 0 or vert0[1] >= edge_image.shape[0]:
+            return False
+        if vert1[0] < 0 or vert1[0] >= edge_image.shape[1]:
+            return False
+        if vert1[1] < 0 or vert1[1] >= edge_image.shape[0]:
+            return False
+
+        draw0 = (int(vert0[0]), int(vert0[1]))
+        draw1 = (int(vert1[0]), int(vert1[1]))
+        print("draw0 {} draw1 {}".format(draw0, draw1))
+        # cv2.line(test_image, draw0, draw1, colors[i])
+        # cv2.imshow("Testing perimeter", test_image)
+        cv2.line(test_overlay, draw0, draw1, colors[i])
+        cv2.imshow("Testing perimeter", test_overlay)
+
+        y0 = int(vert0[1])
+        y1 = int(vert1[1])
+        # If y1 > y0, switch them so the range still works as expected
+        if y0 > y1:
+            tmp = y0
+            y0 = y1
+            y1 = tmp
+        for y in range(y0, y1 + 1):
+            x = int((rho / np.cos(theta)) - (y * np.tan(theta)))
+            # print("x {} y {}".format(x, y))
+            # If this pixel is on, add 1 to perimeter
+            if edge_image[y][x] != 0:
+            #     print("Hey! Perimeter! {}".format(perimeter))
+                perimeter = perimeter + 1
+        
+        # Loop the y coordinate in the range between the included values
+        # Loop the y coordinate in the range of y values included:
+        # for instance, `for y in range(vert0[1], vert1[1])`
+        # Use the formula for x from get_x in accum.py: 
+        #   (rho / np.cos(theta)) - (y * np.tan(theta))
+        # This gives us the x, y coordinate to check.
+        # Perform the check at this pixel in the image
+        # If the pixel is on, add 1 to perimeter
+        
+
     
     return perimeter
 
 """
 Requires: edge image
 """
-def validate_parallelogram(edge_image, parallelogram, max_rho, rho_buckets, parallelogram_thresh):
+def validate_parallelogram(edge_image, parallelogram, max_rho, rho_buckets, theta_buckets, parallelogram_thresh):
     #TODO: get this data from parallelogram
+    peak_k = parallelogram[0]
+    peak_l = parallelogram[1]
+    delta_rho_k = abs(peak_k[0][0] - peak_k[1][0])
+    delta_rho_l = abs(peak_l[0][0] - peak_l[1][0])
+    average_alpha_k = (peak_k[0][1] + peak_k[1][1]) / 2.0
+    average_alpha_l = (peak_l[0][1] + peak_l[1][1]) / 2.0
+    alpha = abs(average_alpha_k - average_alpha_l)
     a = delta_rho_k / np.sin(alpha)
     b = delta_rho_l / np.sin(alpha)
     
     perim_estimate = 2 * (a + b)
-    perim_actual = find_actual_perimeter(edge_image, parallelogram, max_rho, rho_buckets)
+    perim_actual = find_actual_perimeter(edge_image, parallelogram, max_rho, rho_buckets, theta_buckets)
     
     if abs(perim_actual - perim_estimate) < perim_estimate * parallelogram_thresh:
         # Valid
+        print("Valid: estimate {} actual {}".format(perim_estimate, perim_actual))
         return True
+    else:
+        print("INVALID: estimate {} actual {}".format(perim_estimate, perim_actual))
+        return False
 
 """
 Finds, in Cartesian coordinates, the intersection of 2 lines defined in
@@ -193,7 +265,7 @@ If there is no intersection, it returns the point [-1, -1].
 You have to check for this whenever you use this function.
 """
 def find_intersection(rho_1, theta_1, rho_2, theta_2):
-    print("rho1 {} theta1 {} rho2 {} theta2 {}".format(rho_1, theta_1, rho_2, theta_2))
+    # print("rho1 {} theta1 {} rho2 {} theta2 {}".format(rho_1, theta_1, rho_2, theta_2))
     b = np.array([rho_1, rho_2])
     transform = np.array([[np.cos(theta_1), np.sin(theta_1)],
                           [np.cos(theta_2), np.sin(theta_2)]])
@@ -216,9 +288,12 @@ Vertex 3: k1, l0
 Vertices are chosen in this order so that they go sequentially around the 
 parallelogram. We don't know whether it's CW or CCW, or what the orientation 
 of each vertex is with regard to the others.
+
+Resulting format: list of 4 vertex lists
+Each vertex is a list of [x, y] coordinates.
+A [-1, -1] vertex is taken to be invalid.
 """
 def find_parallelogram_vertices(parallelogram, max_rho, rho_buckets, theta_buckets):
-    print("parallelogram \n{}".format(parallelogram))
     peak_k = parallelogram[0]
     peak_l = parallelogram[1]
     
@@ -231,14 +306,15 @@ def find_parallelogram_vertices(parallelogram, max_rho, rho_buckets, theta_bucke
     rho_l_1 = peak_l[1][0]
     theta_l_1 = peak_l[1][1]
     
-    intersection_1 = find_intersection(rho_k_0, theta_k_0, rho_l_0, theta_l_0)
-    print("Intersection 1: x {}    y {}".format(intersection_1[0], intersection_1[1]))
-    intersection_2 = find_intersection(rho_k_0, theta_k_0, rho_l_1, theta_l_1)
-    print("Intersection 2: x {}    y {}".format(intersection_2[0], intersection_2[1]))
+    intersection_0 = find_intersection(rho_k_0, theta_k_0, rho_l_0, theta_l_0)
+    # print("Intersection 0: x {}    y {}".format(intersection_1[0], intersection_1[1]))
+    intersection_1 = find_intersection(rho_k_0, theta_k_0, rho_l_1, theta_l_1)
+    # print("Intersection 1: x {}    y {}".format(intersection_2[0], intersection_2[1]))
+    intersection_2 = find_intersection(rho_k_1, theta_k_1, rho_l_1, theta_l_1)
+    # print("Intersection 2: x {}    y {}".format(intersection_4[0], intersection_4[1]))
     intersection_3 = find_intersection(rho_k_1, theta_k_1, rho_l_0, theta_l_0)
-    print("Intersection 3: x {}    y {}".format(intersection_3[0], intersection_3[1]))
-    intersection_4 = find_intersection(rho_k_1, theta_k_1, rho_l_1, theta_l_1)
-    print("Intersection 4: x {}    y {}".format(intersection_4[0], intersection_4[1]))
+    # print("Intersection 3: x {}    y {}".format(intersection_3[0], intersection_3[1]))
 
-    return intersection_1, intersection_2, intersection_3, intersection_4
+    return intersection_0, intersection_1, intersection_2, intersection_3
+
 #tiling
