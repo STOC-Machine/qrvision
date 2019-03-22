@@ -168,6 +168,7 @@ def find_actual_perimeter(edge_image, parallelogram, max_rho, rho_buckets, theta
     theta_l_0 = peak_l[0][1]
     rho_l_1 = peak_l[1][0]
     theta_l_1 = peak_l[1][1]
+    edges = [peak_k[0], peak_l[1], peak_k[1], peak_l[0]]
 
     # Returned in format: [x, y]
     vertices = find_parallelogram_vertices(parallelogram, max_rho, rho_buckets, theta_buckets)
@@ -181,6 +182,7 @@ def find_actual_perimeter(edge_image, parallelogram, max_rho, rho_buckets, theta
         j = (i + 1) % 4;
         vert0 = vertices[i]
         vert1 = vertices[j]
+        rho = edges[i][0]
         theta = edges[i][1]
 
         # Check that all vertices are actually in the image.
