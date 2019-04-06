@@ -2,7 +2,17 @@ import numpy as np
 import cv2
 import collections
 
-Peak = collections.namedtuple("Peak", ["rho_bucket", "theta_bucket", "rho", "theta"])
+OldPeak = collections.namedtuple("OldPeak", ["rho_bucket", "theta_bucket", "rho", "theta"])
+"""
+Using terminology from paper:
+Rho is the radius from the origin in pixels.
+Theta is the angle from the vertical in radians.
+The buckets are the accumulator indices corresponding to each, while rho and theta are true radius
+and angle values.
+The height is the height of the accumulator array at the point (rho, theta). In the paper, it is
+denoted C.
+"""
+Peak = collections.namedtuple("Peak", ["rho_bucket", "rho", "theta_bucket", "theta", "height"])
 
 class Edge:
     """
@@ -108,9 +118,34 @@ def findPeaks(acc, peak_thresh, max_rho, rho_buckets, theta_buckets):
             if is_peak(acc, rho_bucket, theta_bucket, peak_thresh):
                 rho = convert_rho(rho_bucket, max_rho, rho_buckets)
                 theta = convert_angle_radians(theta_bucket, theta_buckets)
-                peak = Peak(rho_bucket=rho_bucket, rho=rho, theta_bucket=theta_bucket, theta=theta)
+                peak = OldPeak(rho_bucket=rho_bucket, rho=rho, theta_bucket=theta_bucket, theta=theta)
                 peaks.append(peak)
                 
+    return peaks
+
+"""
+Finds the peak elements in the accumulator: these are lines in the image.
+peak_thresh is the threshold used to determine what is a valid peak.
+It should be the length in pixels of the smallest segment
+we would consider a line.
+"""
+def findPeaks_NEW(acc, enhanced_acc, peak_thresh, max_rho, rho_buckets, theta_buckets):
+    peaks = []
+    old_peaks = []
+    for rho_bucket in range(0, enhanced_acc.shape[0]):
+        for theta_bucket in range(0, enhanced_acc.shape[1]):
+            if is_peak(enhanced_acc, rho_bucket, theta_bucket, peak_thresh):
+                rho = convert_rho(rho_bucket, max_rho, rho_buckets)
+                theta = convert_angle_radians(theta_bucket, theta_buckets)
+                height = acc[rho_bucket][theta_bucket]
+                peak = Peak(rho_bucket=rho_bucket, rho=rho, theta_bucket=theta_bucket, theta=theta, height=height)
+                old_peak = OldPeak(rho_bucket=rho_bucket, rho=rho, theta_bucket=theta_bucket, theta=theta)
+                peaks.append(peak)
+                old_peaks.append(old_peak)
+                
+    test_peaks = findPeaks(enhanced_acc, peak_thresh, max_rho, rho_buckets, theta_buckets)
+    assert(test_peaks == old_peaks)
+    print("OK!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! Peaks works")
     return peaks
 
 """
@@ -125,11 +160,11 @@ def findPeakPairs(peaks, acc, angle_thresh, pixel_thresh, rho_thresh, max_rho, r
             
             if abs(peaks[i].theta_bucket - peaks[j].theta_bucket) < angle_thresh:
                 if abs(cur1 - cur2) < (pixel_thresh * (cur1 + cur2)/2):
-                    rho_i = convert_rho(peaks[i][0], max_rho, rho_buckets)
-                    theta_i = convert_angle_radians(peaks[i][1], theta_buckets)
+                    rho_i = convert_rho(peaks[i].rho_bucket, max_rho, rho_buckets)
+                    theta_i = convert_angle_radians(peaks[i].theta_bucket, theta_buckets)
                     
-                    rho_j = convert_rho(peaks[j][0], max_rho, rho_buckets)
-                    theta_j = convert_angle_radians(peaks[j][1], theta_buckets)
+                    rho_j = convert_rho(peaks[j].rho_bucket, max_rho, rho_buckets)
+                    theta_j = convert_angle_radians(peaks[j].theta_bucket, theta_buckets)
                     
                     if abs(rho_i - rho_j) > rho_thresh * (cur1 + cur2) / 2:
                         peakPairs.append(([rho_i, theta_i, cur1],[rho_j, theta_j, cur2]))
