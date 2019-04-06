@@ -122,10 +122,10 @@ def findPeakPairs(peaks, acc, angle_thresh, pixel_thresh, rho_thresh, max_rho, r
             if abs(peaks[i][1]-peaks[j][1]) < angle_thresh:
                 if abs(cur1-cur2) < (pixel_thresh * (cur1 + cur2)/2):
                     rho_i = convert_rho(peaks[i][0], max_rho, rho_buckets)
-                    theta_i = convert_angle(peaks[i][1], theta_buckets)
+                    theta_i = convert_angle_radians(peaks[i][1], theta_buckets)
                     
                     rho_j = convert_rho(peaks[j][0], max_rho, rho_buckets)
-                    theta_j = convert_angle(peaks[j][1], theta_buckets)
+                    theta_j = convert_angle_radians(peaks[j][1], theta_buckets)
                     
                     if abs(rho_i - rho_j) > rho_thresh * (cur1 + cur2) / 2:
                         peakPairs.append([[rho_i, theta_i, cur1],[rho_j, theta_j, cur2]])
