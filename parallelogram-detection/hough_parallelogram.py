@@ -1,5 +1,39 @@
 import numpy as np
 import cv2
+import collections
+
+Peak = collections.namedtuple("Peak", ["rho_bucket", "theta_bucket", "rho", "theta"])
+
+class Edge:
+    """
+    Fields:
+    endpoints (x, y)
+    peak parameteterization:
+        rho (radius from origin, pixels)
+        theta (angle from vertical, degrees)
+    """
+    def __init__(self, actual, left, right):
+        self.endpoints = []
+        self.rho = actual[0]
+        self.theta = actual[1]
+        
+        self.endpoints.append(find_intersection(actual[0], actual[1], left[0], left[1]))
+        self.endpoints.append(find_intersection(actual[0], actual[1], right[0], right[1]))
+
+class Parallelogram:
+    """
+    Fields:
+    edges: list of length 4
+    peak pairs
+    """
+    def __init__(self):
+        pass
+
+def convert_angle_radians(theta_index, theta_buckets):
+    return np.pi * theta_index / theta_buckets
+
+def convert_rho(rho_index, max_rho, rho_buckets):
+    return (rho_index * 2.0 * max_rho / rho_buckets) - max_rho
 
 #section 1:find parallelograms in image
 def enhance(acc, h, w):
@@ -116,7 +150,7 @@ def findParallelograms(peak_pairs, acc, pixel_thresh, parallel_angle_thresh):
     # print("peakPairs:\n{}".format(peak_pairs))
     
     # find average rho, theta for the pairs:
-    pair_averages = [];
+    pair_averages = []
     for pair in peak_pairs:
         theta_p = (pair[0][1] + pair[1][1]) / 2.0
         c_p = (pair[0][2] + pair[1][2]) / 2.0
@@ -320,4 +354,14 @@ def find_parallelogram_vertices(parallelogram, max_rho, rho_buckets, theta_bucke
 
     return intersection_0, intersection_1, intersection_2, intersection_3
 
-#tiling
+def find_parallelogram_edges(parallelogram, max_rho, rho_buckets, theta_buckets):
+    print("parallelogram \n{}".format(parallelogram))
+    peak_k = parallelogram[0]
+    peak_l = parallelogram[1]
+
+    side_0 = Edge(peak_k[0], peak_l[0], peak_l[1])
+    side_1 = Edge(peak_l[0], peak_k[0], peak_k[1])
+    side_2 = Edge(peak_k[1], peak_l[1], peak_l[0])
+    side_3 = Edge(peak_l[1], peak_k[1], peak_k[0])
+
+    return side_0, side_1, side_2, side_3
