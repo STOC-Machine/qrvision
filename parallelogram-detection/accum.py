@@ -135,7 +135,6 @@ while len(files) > 0:
     
     # Test findPeaks
     max_rho = img.shape[0] + img.shape[1]
-    test_peaks = hough_parallelogram.findPeaks(enhanced, 500, max_rho, rho_buckets, theta_buckets)
     peaks = hough_parallelogram.findPeaks_NEW(accumulated, enhanced, 500, max_rho, rho_buckets, theta_buckets)
     print("Number of peaks: {}".format(len(peaks)))
     # for peak in peaks:
@@ -146,9 +145,7 @@ while len(files) > 0:
     lines_image = np.zeros((edges.shape[0], edges.shape[1], 3))
     # draw_lines(lines_image, accumulated, peaks, (255, 0, 0), "Hough lines")
 
-    test_pairs = hough_parallelogram.findPeakPairs(test_peaks, accumulated, 3.0, 0.3, 0.3, max_rho, rho_buckets, theta_buckets)
     peak_pairs = hough_parallelogram.findPeakPairs(peaks, accumulated, 3.0, 0.3, 0.3, max_rho, rho_buckets, theta_buckets)
-    assert(test_pairs == peak_pairs)
     print("Number of peak pairs: {}".format(len(peak_pairs)))
     
     pairs_image = np.zeros((edges.shape[0], edges.shape[1], 3))
