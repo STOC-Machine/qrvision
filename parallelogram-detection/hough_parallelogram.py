@@ -101,12 +101,16 @@ peak_thresh is the threshold used to determine what is a valid peak.
 It should be the length in pixels of the smallest segment
 we would consider a line.
 """
-def findPeaks(acc, peak_thresh):
+def findPeaks(acc, peak_thresh, max_rho, rho_buckets, theta_buckets):
     peaks = []
-    for rho in range(0, acc.shape[0]):
-        for theta in range(0, acc.shape[1]):
-            if is_peak(acc, rho, theta, peak_thresh):
-                peaks.append([rho, theta])
+    for rho_bucket in range(0, acc.shape[0]):
+        for theta_bucket in range(0, acc.shape[1]):
+            if is_peak(acc, rho_bucket, theta_bucket, peak_thresh):
+                rho = convert_rho(rho_bucket, max_rho, rho_buckets)
+                theta = convert_angle_radians(theta_bucket, theta_buckets)
+                peak = Peak(rho_bucket=rho_bucket, rho=rho, theta_bucket=theta_bucket, theta=theta)
+                peaks.append(peak)
+                
     return peaks
 
 """
@@ -116,11 +120,11 @@ def findPeakPairs(peaks, acc, angle_thresh, pixel_thresh, rho_thresh, max_rho, r
     peakPairs = []
     for i in range(0, len(peaks)):
         for j in range(i+1, len(peaks)):
-            cur1 = acc[peaks[i][0]][peaks[i][1]]
-            cur2 = acc[peaks[j][0]][peaks[j][1]]
+            cur1 = acc[peaks[i].rho_bucket][peaks[i].theta_bucket]
+            cur2 = acc[peaks[j].rho_bucket][peaks[j].theta_bucket]
             
-            if abs(peaks[i][1]-peaks[j][1]) < angle_thresh:
-                if abs(cur1-cur2) < (pixel_thresh * (cur1 + cur2)/2):
+            if abs(peaks[i].theta_bucket - peaks[j].theta_bucket) < angle_thresh:
+                if abs(cur1 - cur2) < (pixel_thresh * (cur1 + cur2)/2):
                     rho_i = convert_rho(peaks[i][0], max_rho, rho_buckets)
                     theta_i = convert_angle_radians(peaks[i][1], theta_buckets)
                     
@@ -128,9 +132,9 @@ def findPeakPairs(peaks, acc, angle_thresh, pixel_thresh, rho_thresh, max_rho, r
                     theta_j = convert_angle_radians(peaks[j][1], theta_buckets)
                     
                     if abs(rho_i - rho_j) > rho_thresh * (cur1 + cur2) / 2:
-                        peakPairs.append([[rho_i, theta_i, cur1],[rho_j, theta_j, cur2]])
+                        peakPairs.append(([rho_i, theta_i, cur1],[rho_j, theta_j, cur2]))
                     
-    return peakPairs 
+    return peakPairs
     #y coordinate is close to each other, and value in acc is close
     #return a list of pairs of lists (rho, theta, height2)
 
