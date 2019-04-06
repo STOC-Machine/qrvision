@@ -104,7 +104,7 @@ def draw_parallelograms(image, accum, ps, title):
 
 max_rho = 0
 rho_buckets = 500
-theta_buckets = 200
+theta_buckets = 500
 
 files = glob.glob(sys.argv[1])
 while len(files) > 0:
@@ -162,9 +162,25 @@ while len(files) > 0:
 
     edges_0 = hough_parallelogram.find_parallelogram_edges(parallelograms[0], max_rho, rho_buckets, theta_buckets)
 
+    valids = []
+    all_errors = []
     for parallelogram in parallelograms:
-        hough_parallelogram.validate_parallelogram(edges, parallelogram, max_rho, rho_buckets, theta_buckets, 0.3)
+        valid, error = hough_parallelogram.validate_parallelogram(edges, parallelogram, max_rho, rho_buckets, theta_buckets, 0.6)
+        if error != 1:
+            all_errors.append([error, parallelogram])
+            if valid:
+                valids.append([error, parallelogram])
+                cv2.waitKey(0)
+    print("Number of valid parallelograms: {}".format(len(valids)))
+
+    all_errors.sort()
+    for p in all_errors:
+        test_image = np.zeros((edges.shape[0], edges.shape[1], 3))
+        test_overlay = cv2.cvtColor(edges, cv2.COLOR_GRAY2BGR)
+        draw_parallelograms(test_image, accumulated, [p[1]], "Sorted parallelograms")
+        print("Agreement: {}".format(p[0]))
         cv2.waitKey(0)
+    # draw_parallelograms(test_image, accumulated, [p[1] for p in all_agreements], "Sorted parallelograms")
     
     # print(draw_parallelograms(lines_image, accumulated, parallelograms, "Parallelograms"))
     

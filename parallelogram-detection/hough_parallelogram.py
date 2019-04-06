@@ -249,14 +249,16 @@ def validate_parallelogram(edge_image, parallelogram, max_rho, rho_buckets, thet
     
     perim_estimate = 2 * (a + b)
     perim_actual = find_actual_perimeter(edge_image, parallelogram, max_rho, rho_buckets, theta_buckets)
+    if perim_actual == False:
+        return False, 1
     
     if abs(perim_actual - perim_estimate) < perim_estimate * parallelogram_thresh:
         # Valid
-        print("Valid: estimate {} actual {}".format(perim_estimate, perim_actual))
-        return True
+        # print("                  Valid: estimate {} actual {} ======================".format(perim_estimate, perim_actual))
+        return True, abs(perim_actual - perim_estimate) / perim_estimate
     else:
-        print("INVALID: estimate {} actual {}".format(perim_estimate, perim_actual))
-        return False
+        # print("INVALID: estimate {} actual {}".format(perim_estimate, perim_actual))
+        return False, abs(perim_actual - perim_estimate) / perim_estimate
 
 """
 Finds, in Cartesian coordinates, the intersection of 2 lines defined in
