@@ -26,12 +26,12 @@ Alternatively, we could define the angle from 0 to 2*pi, instead of pi. It would
 their spec, but as long as we're consistent and know that, we should be ok.
 """
 def accumulate(image, theta_buckets, rho_buckets):
-    
+
     accum = np.zeros((rho_buckets, theta_buckets))
-    
+
     max_rho = math.sqrt((image.shape[0] * image.shape[0]) + (image.shape[1] * image.shape[1]))
     max_rho = image.shape[0] + image.shape[1]
-    
+
     iterator = np.nditer(image, flags=['multi_index'])
     while(not iterator.finished):
         if(iterator[0] != 0):
@@ -63,7 +63,7 @@ def get_accum_endpoints(acc, peak, dim):
     top = (x_top, 0)
     bottom = (x_bottom, dim[0])
     return top, bottom
-    
+
 def generate_color_spectrum(iteration):
     hue = 180 - (2 * iteration)
     color = np.uint8([[[hue, 255, 255]]])
@@ -101,6 +101,25 @@ def draw_parallelograms(image, accum, ps, title):
         for pair in parallelogram:
             image = draw_lines(image, accum, pair, color, "Pair 1")
     cv2.imshow(title, image)
+def make_tiles(img, numx, numy):
+    tiles = []
+    height = img.shape[0]
+    width = img.shape[1]
+    yInc = math.ceil(height/numy)
+    xInc = math.ceil(width/numx)
+    y = 0
+    x = 0
+    while y < height:
+        while x < width :
+            new_img = img[y: y+yInc, x:x+xInc]
+            x = x+xInc
+            tiles.append(new_img)
+        x = 0
+        y = y+yInc
+    for img in tiles:
+        cv2.imshow("image",img)
+        cv2.waitKey(0)
+    cv2.destroyAllWindows()
 
 max_rho = 0
 rho_buckets = 500
@@ -110,17 +129,18 @@ files = glob.glob(sys.argv[1])
 while len(files) > 0:
     file = files.pop(0)
     img = cv2.imread(file)
-    
+    tiles = make_tiles(img, 10, 10)
+    break
     if img is None:
         print('Error: could not read image file {}, skipping.'.format(file))
         continue
-    
+
     # cv2.imshow("Original", img)
     edges = cv2.Canny(img, 100, 100)
     cv2.imshow("Edges", edges)
     accumulated = accumulate(edges, theta_buckets, rho_buckets)
     maximum = np.amax(accumulated)
-    
+
     # Run accumulator
     accumimage = (255.0 / maximum) * accumulated
     # cv2.imshow("Accum", accumulated.astype(np.uint8))
@@ -132,7 +152,7 @@ while len(files) > 0:
     # cv2.imshow("Enhanced", enhanceimage.astype(np.uint8))
     cv2.imwrite("enhaced.jpg", enhanceimage.astype(np.uint8))
     print("Max element in enhanced: {}".format(np.amax(enhanced)))
-    
+
     # Test findPeaks
     max_rho = img.shape[0] + img.shape[1]
     peaks = hough_parallelogram.findPeaks(enhanced, 500)
@@ -141,16 +161,16 @@ while len(files) > 0:
     #     rho = peak[0]
     #     theta = peak[1]
     #     print("Peak: rho {}, theta {}, height {}".format(rho, theta, accumulated[rho][theta]))
-        
+
     lines_image = np.zeros((edges.shape[0], edges.shape[1], 3))
     # draw_lines(lines_image, accumulated, peaks, (255, 0, 0), "Hough lines")
 
     peak_pairs = hough_parallelogram.findPeakPairs(peaks, accumulated, 3.0, 0.3, 0.3, max_rho, rho_buckets, theta_buckets)
     print("Number of peak pairs: {}".format(len(peak_pairs)))
-    
+
     pairs_image = np.zeros((edges.shape[0], edges.shape[1], 3))
     # draw_pairs(pairs_image, accumulated, peak_pairs)
-    
+
     # Test findParallelograms
     parallelograms = hough_parallelogram.findParallelograms(peak_pairs, accumulated, 0.7, np.pi / 6)
     print("Number of parallelograms: {}".format(len(parallelograms)))
@@ -165,9 +185,9 @@ while len(files) > 0:
     for parallelogram in parallelograms:
         hough_parallelogram.validate_parallelogram(edges, parallelogram, max_rho, rho_buckets, theta_buckets, 0.3)
         cv2.waitKey(0)
-    
+
     # print(draw_parallelograms(lines_image, accumulated, parallelograms, "Parallelograms"))
-    
+
     # Wait for keypress to continue, close old windows
     cv2.waitKey(0)
     cv2.destroyAllWindows()
