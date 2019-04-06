@@ -109,12 +109,6 @@ def findPeaks(acc, peak_thresh):
                 peaks.append([rho, theta])
     return peaks
 
-def convert_angle(theta_index, theta_buckets):
-    return np.pi * theta_index / theta_buckets
-
-def convert_rho(rho_index, max_rho, rho_buckets):
-    return (rho_index * 2.0 * max_rho / rho_buckets) - max_rho
-
 """
 Note: angle_thresh is the number of theta indices, not a true angle
 """
