@@ -58,39 +58,39 @@ def enhance(acc, h, w):
     return enhanced
 
 # Based on the OpenCV implementation: hough.cpp, line 84
-def is_peak(acc, rho_index, theta_index, peak_thresh):
-    if acc[rho_index, theta_index] < peak_thresh:
+def is_peak(acc, rho_bucket, theta_bucket, peak_thresh):
+    if acc[rho_bucket, theta_bucket] < peak_thresh:
         return False
 
     # Check that acc[rho_index, theta_index] is greater than all neighboring values,
     # making sure that we don't go outside array bounds
     # Check vertical
-    if rho_index > 0:
-        if acc[rho_index - 1][theta_index] >= acc[rho_index][theta_index]:
+    if rho_bucket > 0:
+        if acc[rho_bucket - 1][theta_bucket] >= acc[rho_bucket][theta_bucket]:
             return False
-    if rho_index < acc.shape[0] - 1:
-        if acc[rho_index + 1][theta_index] >= acc[rho_index][theta_index]:
+    if rho_bucket < acc.shape[0] - 1:
+        if acc[rho_bucket + 1][theta_bucket] >= acc[rho_bucket][theta_bucket]:
             return False
     # Check horizontal
-    if theta_index > 0:
-        if acc[rho_index][theta_index - 1] >= acc[rho_index][theta_index]:
+    if theta_bucket > 0:
+        if acc[rho_bucket][theta_bucket - 1] >= acc[rho_bucket][theta_bucket]:
             return False
-    if theta_index < acc.shape[1] - 1:
-        if acc[rho_index][theta_index + 1] >= acc[rho_index][theta_index]:
+    if theta_bucket < acc.shape[1] - 1:
+        if acc[rho_bucket][theta_bucket + 1] >= acc[rho_bucket][theta_bucket]:
             return False
     # Check diagonal above
-    if rho_index > 0 and theta_index > 0:
-        if acc[rho_index - 1][theta_index - 1] >= acc[rho_index][theta_index]:
+    if rho_bucket > 0 and theta_bucket > 0:
+        if acc[rho_bucket - 1][theta_bucket - 1] >= acc[rho_bucket][theta_bucket]:
             return False
-    if rho_index > 0 and theta_index < acc.shape[1] - 1:
-        if acc[rho_index - 1][theta_index + 1] >= acc[rho_index][theta_index]:
+    if rho_bucket > 0 and theta_bucket < acc.shape[1] - 1:
+        if acc[rho_bucket - 1][theta_bucket + 1] >= acc[rho_bucket][theta_bucket]:
             return False
     # Check diagonal below
-    if rho_index < acc.shape[0] and theta_index > 0:
-        if acc[rho_index + 1][theta_index - 1] >= acc[rho_index][theta_index]:
+    if rho_bucket < acc.shape[0] and theta_bucket > 0:
+        if acc[rho_bucket + 1][theta_bucket - 1] >= acc[rho_bucket][theta_bucket]:
             return False
-    if rho_index < acc.shape[0] and theta_index < acc.shape[1] - 1:
-        if acc[rho_index + 1][theta_index + 1] >= acc[rho_index][theta_index]:
+    if rho_bucket < acc.shape[0] and theta_bucket < acc.shape[1] - 1:
+        if acc[rho_bucket + 1][theta_bucket + 1] >= acc[rho_bucket][theta_bucket]:
             return False
     # If none of the above cases is true, then it is a valid peak
     return True
