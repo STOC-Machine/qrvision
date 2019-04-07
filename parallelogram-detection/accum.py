@@ -135,7 +135,7 @@ while len(files) > 0:
     
     # Test findPeaks
     max_rho = img.shape[0] + img.shape[1]
-    peaks = hough_parallelogram.findPeaks_NEW(accumulated, enhanced, 500, max_rho, rho_buckets, theta_buckets)
+    peaks = hough_parallelogram.findPeaks(accumulated, enhanced, 500, max_rho, rho_buckets, theta_buckets)
     print("Number of peaks: {}".format(len(peaks)))
     # for peak in peaks:
     #     rho = peak[0]

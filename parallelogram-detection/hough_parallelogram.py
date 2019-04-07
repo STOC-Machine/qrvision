@@ -110,7 +110,7 @@ peak_thresh is the threshold used to determine what is a valid peak.
 It should be the length in pixels of the smallest segment
 we would consider a line.
 """
-def findPeaks_NEW(acc, enhanced_acc, peak_thresh, max_rho, rho_buckets, theta_buckets):
+def findPeaks(acc, enhanced_acc, peak_thresh, max_rho, rho_buckets, theta_buckets):
     peaks = []
     for rho_bucket in range(0, enhanced_acc.shape[0]):
         for theta_bucket in range(0, enhanced_acc.shape[1]):
