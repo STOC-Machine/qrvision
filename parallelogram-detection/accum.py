@@ -154,11 +154,11 @@ while len(files) > 0:
     # Test findParallelograms
     parallelograms = hough_parallelogram.findParallelograms(peak_pairs, accumulated, 0.7, np.pi / 6)
     print("Number of parallelograms: {}".format(len(parallelograms)))
-    for parallelogram in parallelograms:
-        rho0 = parallelogram[0][0]
-        theta0 = parallelogram[0][1]
-        rho1 = parallelogram[1][0]
-        theta1 = parallelogram[1][1]
+    # for parallelogram in parallelograms:
+    #     rho0 = parallelogram[0][0]
+    #     theta0 = parallelogram[0][1]
+    #     rho1 = parallelogram[1][0]
+    #     theta1 = parallelogram[1][1]
 
     edges_0 = hough_parallelogram.find_parallelogram_edges(parallelograms[0], max_rho, rho_buckets, theta_buckets)
 

@@ -12,6 +12,7 @@ The height is the height of the accumulator array at the point (rho, theta). In 
 denoted C.
 """
 Peak = collections.namedtuple("Peak", ["rho_bucket", "rho", "theta_bucket", "theta", "height"])
+# Note for refactor: peak[0] = rho, peak[1] = theta
 
 class Edge:
     """
@@ -127,7 +128,7 @@ def findPeaks(acc, enhanced_acc, peak_thresh, max_rho, rho_buckets, theta_bucket
 Note: angle_thresh is the number of theta indices, not a true angle
 """
 def findPeakPairs(peaks, acc, angle_thresh, pixel_thresh, rho_thresh, max_rho, rho_buckets, theta_buckets):
-    peakPairs = []
+    peak_pairs = []
     for i in range(0, len(peaks)):
         for j in range(i+1, len(peaks)):
             cur1 = acc[peaks[i].rho_bucket][peaks[i].theta_bucket]
@@ -146,9 +147,10 @@ def findPeakPairs(peaks, acc, angle_thresh, pixel_thresh, rho_thresh, max_rho, r
                     theta_j = convert_angle_radians(peaks[j].theta_bucket, theta_buckets)
                     
                     if abs(rho_i - rho_j) > rho_thresh * (cur1 + cur2) / 2:
-                        peakPairs.append(([rho_i, theta_i, cur1],[rho_j, theta_j, cur2]))
+                        # peak_pairs.append(([rho_i, theta_i, cur1],[rho_j, theta_j, cur2]))
+                        peak_pairs.append((peaks[i], peaks[j]))
                     
-    return peakPairs
+    return peak_pairs
     #y coordinate is close to each other, and value in acc is close
     #return a list of pairs of lists (rho, theta, height2)
 
@@ -164,21 +166,21 @@ def findParallelograms(peak_pairs, acc, pixel_thresh, parallel_angle_thresh):
     # find average rho, theta for the pairs:
     pair_averages = []
     for pair in peak_pairs:
-        theta_p = (pair[0][1] + pair[1][1]) / 2.0
-        c_p = (pair[0][2] + pair[1][2]) / 2.0
+        theta_p = (pair[0].theta + pair[1].theta) / 2.0
+        c_p = (pair[0].height + pair[1].height) / 2.0
         pair_averages.append([theta_p, c_p])
 
     parallelograms = []
     # for each pair of pairs:
     for i in range(0, len(peak_pairs)):
         for j in range(i + 1, len(peak_pairs)):
-            peak_k = peak_pairs[i]
+            pair_k = peak_pairs[i]
             average_k = pair_averages[i]
-            peak_l = peak_pairs[j]
+            pair_l = peak_pairs[j]
             average_l = pair_averages[j]
 
-            delta_rho_k = abs(peak_k[0][0] - peak_k[1][0])
-            delta_rho_l = abs(peak_l[0][0] - peak_l[1][0])
+            delta_rho_k = abs(pair_k[0].rho - pair_k[1].rho)
+            delta_rho_l = abs(pair_l[0].rho - pair_l[1].rho)
 
             alpha = abs(average_k[0] - average_l[0])
 
@@ -186,7 +188,10 @@ def findParallelograms(peak_pairs, acc, pixel_thresh, parallel_angle_thresh):
             d_2 = abs((delta_rho_l - average_k[1] * np.sin(alpha)) / delta_rho_l)
 
             if max(d_1, d_2) < pixel_thresh and alpha > parallel_angle_thresh:
-                parallelograms.append([peak_k, peak_l])
+                # parallelograms.append([pair_k, pair_l])
+                k_list = [[pair_k[0].rho, pair_k[0].theta, pair_k[0].height], [pair_k[1].rho, pair_k[1].theta, pair_k[1].height]]
+                l_list = [[pair_l[0].rho, pair_l[0].theta, pair_l[0].height], [pair_l[1].rho, pair_l[1].theta, pair_l[1].height]]
+                parallelograms.append([k_list, l_list])
 
     return parallelograms
 
