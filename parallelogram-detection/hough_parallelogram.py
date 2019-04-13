@@ -158,6 +158,7 @@ Note: angle_thresh is the number of theta indices, not a true angle
 """
 def findPeakPairs(peaks, acc, angle_thresh, pixel_thresh, rho_thresh, max_rho, rho_buckets, theta_buckets):
     peak_pairs = []
+    peak_pairs_obj = []
     for i in range(0, len(peaks)):
         for j in range(i+1, len(peaks)):
             cur1 = acc[peaks[i].rho_bucket][peaks[i].theta_bucket]
@@ -178,6 +179,8 @@ def findPeakPairs(peaks, acc, angle_thresh, pixel_thresh, rho_thresh, max_rho, r
                     if abs(rho_i - rho_j) > rho_thresh * (cur1 + cur2) / 2:
                         # peak_pairs.append(([rho_i, theta_i, cur1],[rho_j, theta_j, cur2]))
                         peak_pairs.append((peaks[i], peaks[j]))
+                        new_pair = PeakPair(peaks[i], peaks[j])
+                        peak_pairs_obj.append(new_pair)
                     
     return peak_pairs
     #y coordinate is close to each other, and value in acc is close
