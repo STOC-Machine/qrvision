@@ -333,17 +333,17 @@ Each vertex is a list of [x, y] coordinates.
 A [-1, -1] vertex is taken to be invalid.
 """
 def find_parallelogram_vertices(parallelogram, max_rho, rho_buckets, theta_buckets):
-    peak_k = parallelogram[0]
-    peak_l = parallelogram[1]
+    pair_k = parallelogram[0]
+    pair_l = parallelogram[1]
     
-    rho_k_0 = peak_k[0].rho
-    theta_k_0 = peak_k[0].theta
-    rho_k_1 = peak_k[1].rho
-    theta_k_1 = peak_k[1].theta
-    rho_l_0 = peak_l[0].rho
-    theta_l_0 = peak_l[0].theta
-    rho_l_1 = peak_l[1].rho
-    theta_l_1 = peak_l[1].theta
+    rho_k_0 = pair_k[0].rho
+    theta_k_0 = pair_k[0].theta
+    rho_k_1 = pair_k[1].rho
+    theta_k_1 = pair_k[1].theta
+    rho_l_0 = pair_l[0].rho
+    theta_l_0 = pair_l[0].theta
+    rho_l_1 = pair_l[1].rho
+    theta_l_1 = pair_l[1].theta
     
     intersection_0 = find_intersection(rho_k_0, theta_k_0, rho_l_0, theta_l_0)
     # print("Intersection 0: x {}    y {}".format(intersection_1[0], intersection_1[1]))
