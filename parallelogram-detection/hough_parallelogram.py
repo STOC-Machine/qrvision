@@ -24,11 +24,11 @@ class Edge:
     """
     def __init__(self, actual, left, right):
         self.endpoints = []
-        self.rho = actual[0]
-        self.theta = actual[1]
+        self.rho = actual.rho
+        self.theta = actual.theta
         
-        self.endpoints.append(find_intersection(actual[0], actual[1], left[0], left[1]))
-        self.endpoints.append(find_intersection(actual[0], actual[1], right[0], right[1]))
+        self.endpoints.append(find_intersection(self.rho, self.theta, left.rho, left.theta))
+        self.endpoints.append(find_intersection(self.rho, self.theta, right.rho, right.theta))
 
 class Parallelogram:
     """

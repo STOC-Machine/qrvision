@@ -209,6 +209,10 @@ while len(files) > 0:
     print("~~~~~~~~TESTING~~~~~~~~ Errors agree")
     assert(valids == valids_oldTEST)
     print("~~~~~~~~TESTING~~~~~~~~ Valids agree")
+
+    # Test edges in the most basic way possible: should except for syntax errors, etc
+    for parallelogram in parallelograms:
+        parallelogram_edge = hough_parallelogram.find_parallelogram_edges(parallelogram, max_rho, rho_buckets, theta_buckets)
     
     # print(draw_parallelograms(lines_image, accumulated, parallelograms, "Parallelograms"))
     
