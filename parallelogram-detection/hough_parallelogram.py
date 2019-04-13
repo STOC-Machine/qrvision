@@ -188,10 +188,7 @@ def findParallelograms(peak_pairs, acc, pixel_thresh, parallel_angle_thresh):
             d_2 = abs((delta_rho_l - average_k[1] * np.sin(alpha)) / delta_rho_l)
 
             if max(d_1, d_2) < pixel_thresh and alpha > parallel_angle_thresh:
-                # parallelograms.append([pair_k, pair_l])
-                k_list = [[pair_k[0].rho, pair_k[0].theta, pair_k[0].height], [pair_k[1].rho, pair_k[1].theta, pair_k[1].height]]
-                l_list = [[pair_l[0].rho, pair_l[0].theta, pair_l[0].height], [pair_l[1].rho, pair_l[1].theta, pair_l[1].height]]
-                parallelograms.append([k_list, l_list])
+                parallelograms.append([pair_k, pair_l])
 
     return parallelograms
 
@@ -277,8 +274,6 @@ def find_actual_perimeter(edge_image, parallelogram, max_rho, rho_buckets, theta
         # Perform the check at this pixel in the image
         # If the pixel is on, add 1 to perimeter
         
-
-    
     return perimeter
 
 """
@@ -286,18 +281,25 @@ Requires: edge image
 """
 def validate_parallelogram(edge_image, parallelogram, max_rho, rho_buckets, theta_buckets, parallelogram_thresh):
     #TODO: get this data from parallelogram
-    peak_k = parallelogram[0]
-    peak_l = parallelogram[1]
-    delta_rho_k = abs(peak_k[0][0] - peak_k[1][0])
-    delta_rho_l = abs(peak_l[0][0] - peak_l[1][0])
-    average_alpha_k = (peak_k[0][1] + peak_k[1][1]) / 2.0
-    average_alpha_l = (peak_l[0][1] + peak_l[1][1]) / 2.0
+    pair_k = parallelogram[0]
+    pair_l = parallelogram[1]
+    delta_rho_k = abs(pair_k[0].rho - pair_k[1].rho)
+    delta_rho_l = abs(pair_l[0].rho - pair_l[1].rho)
+    average_alpha_k = (pair_k[0].theta + pair_k[1].theta) / 2.0
+    average_alpha_l = (pair_l[0].theta + pair_l[1].theta) / 2.0
     alpha = abs(average_alpha_k - average_alpha_l)
     a = delta_rho_k / np.sin(alpha)
     b = delta_rho_l / np.sin(alpha)
     
+    k_list = [[pair_k[0].rho, pair_k[0].theta, pair_k[0].height], [pair_k[1].rho, pair_k[1].theta, pair_k[1].height]]
+    l_list = [[pair_l[0].rho, pair_l[0].theta, pair_l[0].height], [pair_l[1].rho, pair_l[1].theta, pair_l[1].height]]
+    parallelogram_listOLD = [k_list, l_list]
+    # print(parallelogram_listOLD)
+    # print([[[-301.328, 3.1353094682826135, 84.0], [-166.952, 3.1353094682826135, 95.0]], [[-280.96799999999996, 2.4064599726497815, 119.0], [-187.312, 2.412743157956961, 108.0]]])
+    # assert(parallelogram_listOLD == [[[-301.328, 3.1353094682826135, 84.0], [-166.952, 3.1353094682826135, 95.0]], [[-280.96799999999996, 2.4064599726497815, 119.0], [-187.312, 2.412743157956961, 108.0]]])
+
     perim_estimate = 2 * (a + b)
-    perim_actual = find_actual_perimeter(edge_image, parallelogram, max_rho, rho_buckets, theta_buckets)
+    perim_actual = find_actual_perimeter(edge_image, parallelogram_listOLD, max_rho, rho_buckets, theta_buckets)
     if perim_actual == False:
         return False, 1
     

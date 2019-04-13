@@ -166,17 +166,20 @@ while len(files) > 0:
     for i in range(0, len(parallelograms)):
         if parallelograms[i] != parallelograms_oldTEST[i]:
             print("new {} old {}".format(parallelograms[i], parallelograms_oldTEST[i]))
-    assert(parallelograms == parallelograms_oldTEST)
-    print("~~~~~~~~TESTING~~~~~~~~ Parallelograms agree")
 
     valids = []
     all_errors = []
     for parallelogram in parallelograms:
+        pair_k = parallelogram[0]
+        pair_l = parallelogram[1]
         valid, error = hough_parallelogram.validate_parallelogram(edges, parallelogram, max_rho, rho_buckets, theta_buckets, 0.6)
+        k_list = [[pair_k[0].rho, pair_k[0].theta, pair_k[0].height], [pair_k[1].rho, pair_k[1].theta, pair_k[1].height]]
+        l_list = [[pair_l[0].rho, pair_l[0].theta, pair_l[0].height], [pair_l[1].rho, pair_l[1].theta, pair_l[1].height]]
+        parallelogram_listOLD = [k_list, l_list]
         if error != 1:
-            all_errors.append([error, parallelogram])
+            all_errors.append([error, parallelogram_listOLD])
             if valid:
-                valids.append([error, parallelogram])
+                valids.append([error, parallelogram_listOLD])
                 # cv2.waitKey(0)
     print("Number of valid parallelograms: {}".format(len(valids)))
     
