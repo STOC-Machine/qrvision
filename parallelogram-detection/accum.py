@@ -163,9 +163,6 @@ while len(files) > 0:
     #     rho1 = parallelogram[1][0]
     #     theta1 = parallelogram[1][1]
     parallelograms_oldTEST = hough_parallelogram_old.findParallelograms(peak_pairs_oldTEST, accumulated, 0.7, np.pi / 6)
-    for i in range(0, len(parallelograms)):
-        if parallelograms[i] != parallelograms_oldTEST[i]:
-            print("new {} old {}".format(parallelograms[i], parallelograms_oldTEST[i]))
 
     valids = []
     all_errors = []
