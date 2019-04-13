@@ -18,7 +18,7 @@ class Edge:
     """
     Fields:
     endpoints (x, y)
-    peak parameteterization:
+    peak parameterization:
         rho (radius from origin, pixels)
         theta (angle from vertical, degrees)
     """
@@ -34,10 +34,39 @@ class Parallelogram:
     """
     Fields:
     edges: list of length 4
-    peak pairs
+    peak pairs: pair_k
+                pair_l
     """
-    def __init__(self):
-        pass
+    def __init__(self, peak_pairs, max_rho, rho_buckets, theta_buckets):
+        self.pair_k = peak_pairs[0]
+        self.pair_l = peak_pairs[1]
+        self.edges = find_parallelogram_edges(peak_pairs, max_rho, rho_buckets, theta_buckets)
+
+class PeakPair:
+    """
+    Fields:
+    Initial information. These are the values that make up the accumulator peaks in the pair.
+    peaks:  peak_i
+            peak_j
+    
+    Pair information. These values are calculated from the peak and are the 
+    properties of the pair.
+    A pair is a set of parallel and equally long segments. It is defined by 
+    an angle to the vertical, average_theta; a length, average_height; and 
+    the radii of the segments themselves, rho_i and rho_j.
+    line radii: rho_i
+                rho_j
+    average values: average_theta
+                    average_height
+    """
+    def __init__(self, peak_i, peak_j):
+        self.peak_i = peak_i
+        self.peak_j = peak_j
+
+        self.rho_i = peak_i.rho
+        self.rho_j = peak_j.rho
+        self.average_theta = (peak_i.theta + peak_j.theta) / 2.0
+        self.average_height = (peak_i.height + peak_j.height) / 2.0
 
 def convert_angle_radians(theta_index, theta_buckets):
     return np.pi * theta_index / theta_buckets
@@ -157,7 +186,7 @@ def findPeakPairs(peaks, acc, angle_thresh, pixel_thresh, rho_thresh, max_rho, r
 """
 Note: this assumes 'true values'
 """
-def findParallelograms(peak_pairs, acc, pixel_thresh, parallel_angle_thresh):
+def findParallelograms(peak_pairs, acc, pixel_thresh, parallel_angle_thresh, max_rho, rho_buckets, theta_buckets):
     # peakPairs input format:
     # [pair1: [rho, theta, height], pair2: ...]
     
@@ -171,9 +200,12 @@ def findParallelograms(peak_pairs, acc, pixel_thresh, parallel_angle_thresh):
         pair_averages.append([theta_p, c_p])
 
     parallelograms = []
+    parallelogram_objects = []
     # for each pair of pairs:
     for i in range(0, len(peak_pairs)):
         for j in range(i + 1, len(peak_pairs)):
+            print(len(peak_pairs))
+            print(j)
             pair_k = peak_pairs[i]
             average_k = pair_averages[i]
             pair_l = peak_pairs[j]
@@ -188,7 +220,10 @@ def findParallelograms(peak_pairs, acc, pixel_thresh, parallel_angle_thresh):
             d_2 = abs((delta_rho_l - average_k[1] * np.sin(alpha)) / delta_rho_l)
 
             if max(d_1, d_2) < pixel_thresh and alpha > parallel_angle_thresh:
-                parallelograms.append([pair_k, pair_l])
+                parallelogram_pairs = [pair_k, pair_l]
+                parallelograms.append(parallelogram_pairs)
+                obj = Parallelogram(parallelogram_pairs, max_rho, rho_buckets, theta_buckets)
+                parallelogram_objects.append(obj)
 
     return parallelograms
 
