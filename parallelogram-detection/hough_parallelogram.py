@@ -210,12 +210,8 @@ def find_actual_perimeter(edge_image, parallelogram, max_rho, rho_buckets, theta
     
     edges = [pair_k[0], pair_l[1], pair_k[1], pair_l[0]]
 
-    k_list = [[pair_k[0].rho, pair_k[0].theta, pair_k[0].height], [pair_k[1].rho, pair_k[1].theta, pair_k[1].height]]
-    l_list = [[pair_l[0].rho, pair_l[0].theta, pair_l[0].height], [pair_l[1].rho, pair_l[1].theta, pair_l[1].height]]
-    parallelogram_listOLD = [k_list, l_list]
-
     # Returned in format: [x, y]
-    vertices = find_parallelogram_vertices(parallelogram_listOLD, max_rho, rho_buckets, theta_buckets)
+    vertices = find_parallelogram_vertices(parallelogram, max_rho, rho_buckets, theta_buckets)
 
     perimeter = 0
     # For each segment on the parallelogram:
@@ -340,14 +336,14 @@ def find_parallelogram_vertices(parallelogram, max_rho, rho_buckets, theta_bucke
     peak_k = parallelogram[0]
     peak_l = parallelogram[1]
     
-    rho_k_0 = peak_k[0][0]
-    theta_k_0 = peak_k[0][1]
-    rho_k_1 = peak_k[1][0]
-    theta_k_1 = peak_k[1][1]
-    rho_l_0 = peak_l[0][0]
-    theta_l_0 = peak_l[0][1]
-    rho_l_1 = peak_l[1][0]
-    theta_l_1 = peak_l[1][1]
+    rho_k_0 = peak_k[0].rho
+    theta_k_0 = peak_k[0].theta
+    rho_k_1 = peak_k[1].rho
+    theta_k_1 = peak_k[1].theta
+    rho_l_0 = peak_l[0].rho
+    theta_l_0 = peak_l[0].theta
+    rho_l_1 = peak_l[1].rho
+    theta_l_1 = peak_l[1].theta
     
     intersection_0 = find_intersection(rho_k_0, theta_k_0, rho_l_0, theta_l_0)
     # print("Intersection 0: x {}    y {}".format(intersection_1[0], intersection_1[1]))
