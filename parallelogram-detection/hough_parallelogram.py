@@ -205,21 +205,17 @@ def find_actual_perimeter(edge_image, parallelogram, max_rho, rho_buckets, theta
     # by this function should match the length of the accumulator lines almost
     # exactly. 
     
-    peak_k = parallelogram[0]
-    peak_l = parallelogram[1]
+    pair_k = parallelogram[0]
+    pair_l = parallelogram[1]
     
-    rho_k_0 = peak_k[0][0]
-    theta_k_0 = peak_k[0][1]
-    rho_k_1 = peak_k[1][0]
-    theta_k_1 = peak_k[1][1]
-    rho_l_0 = peak_l[0][0]
-    theta_l_0 = peak_l[0][1]
-    rho_l_1 = peak_l[1][0]
-    theta_l_1 = peak_l[1][1]
-    edges = [peak_k[0], peak_l[1], peak_k[1], peak_l[0]]
+    edges = [pair_k[0], pair_l[1], pair_k[1], pair_l[0]]
+
+    k_list = [[pair_k[0].rho, pair_k[0].theta, pair_k[0].height], [pair_k[1].rho, pair_k[1].theta, pair_k[1].height]]
+    l_list = [[pair_l[0].rho, pair_l[0].theta, pair_l[0].height], [pair_l[1].rho, pair_l[1].theta, pair_l[1].height]]
+    parallelogram_listOLD = [k_list, l_list]
 
     # Returned in format: [x, y]
-    vertices = find_parallelogram_vertices(parallelogram, max_rho, rho_buckets, theta_buckets)
+    vertices = find_parallelogram_vertices(parallelogram_listOLD, max_rho, rho_buckets, theta_buckets)
 
     perimeter = 0
     # For each segment on the parallelogram:
@@ -230,8 +226,8 @@ def find_actual_perimeter(edge_image, parallelogram, max_rho, rho_buckets, theta
         j = (i + 1) % 4;
         vert0 = vertices[i]
         vert1 = vertices[j]
-        rho = edges[i][0]
-        theta = edges[i][1]
+        rho = edges[i].rho
+        theta = edges[i].theta
 
         # Check that all vertices are actually in the image.
         # If they're not, this can't be a valid parallelogram in the image
@@ -291,15 +287,8 @@ def validate_parallelogram(edge_image, parallelogram, max_rho, rho_buckets, thet
     a = delta_rho_k / np.sin(alpha)
     b = delta_rho_l / np.sin(alpha)
     
-    k_list = [[pair_k[0].rho, pair_k[0].theta, pair_k[0].height], [pair_k[1].rho, pair_k[1].theta, pair_k[1].height]]
-    l_list = [[pair_l[0].rho, pair_l[0].theta, pair_l[0].height], [pair_l[1].rho, pair_l[1].theta, pair_l[1].height]]
-    parallelogram_listOLD = [k_list, l_list]
-    # print(parallelogram_listOLD)
-    # print([[[-301.328, 3.1353094682826135, 84.0], [-166.952, 3.1353094682826135, 95.0]], [[-280.96799999999996, 2.4064599726497815, 119.0], [-187.312, 2.412743157956961, 108.0]]])
-    # assert(parallelogram_listOLD == [[[-301.328, 3.1353094682826135, 84.0], [-166.952, 3.1353094682826135, 95.0]], [[-280.96799999999996, 2.4064599726497815, 119.0], [-187.312, 2.412743157956961, 108.0]]])
-
     perim_estimate = 2 * (a + b)
-    perim_actual = find_actual_perimeter(edge_image, parallelogram_listOLD, max_rho, rho_buckets, theta_buckets)
+    perim_actual = find_actual_perimeter(edge_image, parallelogram, max_rho, rho_buckets, theta_buckets)
     if perim_actual == False:
         return False, 1
     
