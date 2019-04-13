@@ -198,7 +198,7 @@ def find_actual_perimeter(edge_image, parallelogram, max_rho, rho_buckets, theta
 
         draw0 = (int(vert0[0]), int(vert0[1]))
         draw1 = (int(vert1[0]), int(vert1[1]))
-        print("draw0 {} draw1 {}".format(draw0, draw1))
+        # print("draw0 {} draw1 {}".format(draw0, draw1))
         # cv2.line(test_image, draw0, draw1, colors[i])
         # cv2.imshow("Testing perimeter", test_image)
         cv2.line(test_overlay, draw0, draw1, colors[i])

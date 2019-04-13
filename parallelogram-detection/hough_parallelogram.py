@@ -246,7 +246,7 @@ def find_actual_perimeter(edge_image, parallelogram, max_rho, rho_buckets, theta
 
         draw0 = (int(vert0[0]), int(vert0[1]))
         draw1 = (int(vert1[0]), int(vert1[1]))
-        print("draw0 {} draw1 {}".format(draw0, draw1))
+        # print("draw0 {} draw1 {}".format(draw0, draw1))
         # cv2.line(test_overlay, draw0, draw1, colors[i])
         # cv2.imshow("Testing perimeter", test_overlay)
 
@@ -372,7 +372,7 @@ def find_parallelogram_vertices(parallelogram, max_rho, rho_buckets, theta_bucke
     return intersection_0, intersection_1, intersection_2, intersection_3
 
 def find_parallelogram_edges(parallelogram, max_rho, rho_buckets, theta_buckets):
-    print("parallelogram \n{}".format(parallelogram))
+    # print("parallelogram \n{}".format(parallelogram))
     peak_k = parallelogram[0]
     peak_l = parallelogram[1]
 
