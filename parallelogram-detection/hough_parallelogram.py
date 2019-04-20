@@ -249,7 +249,7 @@ def findParallelograms(peak_pairs_obj, acc, pixel_thresh, parallel_angle_thresh,
                 # obj = Parallelogram(parallelogram_pairs, max_rho, rho_buckets, theta_buckets)
                 parallelogram_objects.append((pair_k, pair_l))
 
-    return parallelograms
+    return parallelogram_objects
 
 def find_actual_perimeter(edge_image, parallelogram, max_rho, rho_buckets, theta_buckets):
     test_image = np.zeros((edge_image.shape[0], edge_image.shape[1], 3))
@@ -264,8 +264,8 @@ def find_actual_perimeter(edge_image, parallelogram, max_rho, rho_buckets, theta
     # by this function should match the length of the accumulator lines almost
     # exactly. 
     
-    pair_k = parallelogram[0]
-    pair_l = parallelogram[1]
+    pair_k = parallelogram[0].old_list_format()
+    pair_l = parallelogram[1].old_list_format()
     
     edges = [pair_k[0], pair_l[1], pair_k[1], pair_l[0]]
 
@@ -332,8 +332,8 @@ Requires: edge image
 """
 def validate_parallelogram(edge_image, parallelogram, max_rho, rho_buckets, theta_buckets, parallelogram_thresh):
     #TODO: get this data from parallelogram
-    pair_k = parallelogram[0]
-    pair_l = parallelogram[1]
+    pair_k = parallelogram[0].old_list_format()
+    pair_l = parallelogram[1].old_list_format()
     delta_rho_k = abs(pair_k[0].rho - pair_k[1].rho)
     delta_rho_l = abs(pair_l[0].rho - pair_l[1].rho)
     average_alpha_k = (pair_k[0].theta + pair_k[1].theta) / 2.0
@@ -392,8 +392,8 @@ Each vertex is a list of [x, y] coordinates.
 A [-1, -1] vertex is taken to be invalid.
 """
 def find_parallelogram_vertices(parallelogram, max_rho, rho_buckets, theta_buckets):
-    pair_k = parallelogram[0]
-    pair_l = parallelogram[1]
+    pair_k = parallelogram[0].old_list_format()
+    pair_l = parallelogram[1].old_list_format()
     
     rho_k_0 = pair_k[0].rho
     theta_k_0 = pair_k[0].theta
@@ -417,8 +417,8 @@ def find_parallelogram_vertices(parallelogram, max_rho, rho_buckets, theta_bucke
 
 def find_parallelogram_edges(parallelogram, max_rho, rho_buckets, theta_buckets):
     # print("parallelogram \n{}".format(parallelogram))
-    peak_k = parallelogram[0]
-    peak_l = parallelogram[1]
+    peak_k = parallelogram[0].old_list_format()
+    peak_l = parallelogram[1].old_list_format()
 
     side_0 = Edge(peak_k[0], peak_l[0], peak_l[1])
     side_1 = Edge(peak_l[0], peak_k[0], peak_k[1])

@@ -185,7 +185,7 @@ while len(files) > 0:
     #     theta1 = parallelogram[1][1]
     parallelograms_oldTEST = hough_parallelogram_old.findParallelograms(peak_pairs_oldTEST, accumulated, 0.7, np.pi / 6)
     find_different_elements(parallelograms, parallelograms_oldTEST)
-    assert(parallelograms == parallelograms_oldTEST)
+    # assert(parallelograms == parallelograms_oldTEST)
 
     valids = []
     all_errors = []
@@ -193,9 +193,10 @@ while len(files) > 0:
         valid, error = hough_parallelogram.validate_parallelogram(edges, parallelogram, max_rho, rho_buckets, theta_buckets, 0.6)
 
         if error != 1:
-            all_errors.append([error, parallelogram])
+            all_errors.append([error, [parallelogram[0].old_list_format(), parallelogram[1].old_list_format()]])
+            assert(type(all_errors[-1][0] == "float64"))
             if valid:
-                valids.append([error, parallelogram])
+                valids.append([error, [parallelogram[0].old_list_format(), parallelogram[1].old_list_format()]])
                 # cv2.waitKey(0)
     print("Number of valid parallelograms: {}".format(len(valids)))
     
@@ -211,7 +212,7 @@ while len(files) > 0:
                 valids_oldTEST.append([error, parallelogram])
                 # cv2.waitKey(0)
 
-    all_errors.sort()
+    all_errors.sort(key=lambda x: x[0])
     for p in all_errors:
         test_image = np.zeros((edges.shape[0], edges.shape[1], 3))
         test_overlay = cv2.cvtColor(edges, cv2.COLOR_GRAY2BGR)
