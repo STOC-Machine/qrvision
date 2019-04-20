@@ -67,6 +67,9 @@ class PeakPair:
         self.rho_j = peak_j.rho
         self.average_theta = (peak_i.theta + peak_j.theta) / 2.0
         self.average_height = (peak_i.height + peak_j.height) / 2.0
+    
+    def old_list_format(self):
+        return (self.peak_i, self.peak_j)
 
 def convert_angle_radians(theta_index, theta_buckets):
     return np.pi * theta_index / theta_buckets
@@ -181,17 +184,21 @@ def findPeakPairs(peaks, acc, angle_thresh, pixel_thresh, rho_thresh, max_rho, r
                         peak_pairs.append((peaks[i], peaks[j]))
                         new_pair = PeakPair(peaks[i], peaks[j])
                         peak_pairs_obj.append(new_pair)
+                        assert((peaks[i], peaks[j]) == new_pair.old_list_format())
                     
-    return peak_pairs
+    return peak_pairs_obj
     #y coordinate is close to each other, and value in acc is close
     #return a list of pairs of lists (rho, theta, height2)
 
 """
 Note: this assumes 'true values'
 """
-def findParallelograms(peak_pairs, acc, pixel_thresh, parallel_angle_thresh, max_rho, rho_buckets, theta_buckets):
+def findParallelograms(peak_pairs_obj, acc, pixel_thresh, parallel_angle_thresh, max_rho, rho_buckets, theta_buckets):
     # peakPairs input format:
     # [pair1: [rho, theta, height], pair2: ...]
+    peak_pairs = []
+    for obj in peak_pairs_obj:
+        peak_pairs.append(obj.old_list_format())
     
     # print("peakPairs:\n{}".format(peak_pairs))
     
@@ -207,8 +214,6 @@ def findParallelograms(peak_pairs, acc, pixel_thresh, parallel_angle_thresh, max
     # for each pair of pairs:
     for i in range(0, len(peak_pairs)):
         for j in range(i + 1, len(peak_pairs)):
-            print(len(peak_pairs))
-            print(j)
             pair_k = peak_pairs[i]
             average_k = pair_averages[i]
             pair_l = peak_pairs[j]

@@ -103,6 +103,27 @@ def draw_parallelograms(image, accum, ps, title):
             image = draw_lines(image, accum, pair, color, "Pair 1")
     cv2.imshow(title, image)
 
+def find_different_elements(one, two):
+    if one == two:
+        print("Agree")
+        return
+
+    if len(one) > len(two):
+        print(two[len(one):])
+        print("Number of disagreeing elements: {}".format(len(one) - len(two)))
+        return
+    if len(two) > len(one):
+        print(one[len(two):])
+        print("Number of disagreeing elements: {}".format(len(two) - len(one)))
+        return
+    different = 0
+    for i in range(0, len(one)):
+        if one[i] != two[i]:
+            print("Disagreeing: {}".format(one[i]))
+            print("             {}".format(two[i]))
+            different += 1
+    print("Number of disagreeing elements: {}".format(different))
+
 max_rho = 0
 rho_buckets = 500
 theta_buckets = 500
@@ -142,7 +163,7 @@ while len(files) > 0:
     #     rho = peak[0]
     #     theta = peak[1]
     #     print("Peak: rho {}, theta {}, height {}".format(rho, theta, accumulated[rho][theta]))
-    peaks_oldTEST = hough_parallelogram_old.findPeaks(enhanced, 500)
+    peaks_oldTEST = hough_parallelogram_old.findPeaks(accumulated, enhanced, 500, max_rho, rho_buckets, theta_buckets)
     
     # lines_image = np.zeros((edges.shape[0], edges.shape[1], 3))
     # draw_lines(lines_image, accumulated, peaks, (255, 0, 0), "Hough lines")
@@ -163,27 +184,26 @@ while len(files) > 0:
     #     rho1 = parallelogram[1][0]
     #     theta1 = parallelogram[1][1]
     parallelograms_oldTEST = hough_parallelogram_old.findParallelograms(peak_pairs_oldTEST, accumulated, 0.7, np.pi / 6)
+    find_different_elements(parallelograms, parallelograms_oldTEST)
 
     valids = []
     all_errors = []
     for parallelogram in parallelograms:
-        pair_k = parallelogram[0]
-        pair_l = parallelogram[1]
         valid, error = hough_parallelogram.validate_parallelogram(edges, parallelogram, max_rho, rho_buckets, theta_buckets, 0.6)
-        k_list = [[pair_k[0].rho, pair_k[0].theta, pair_k[0].height], [pair_k[1].rho, pair_k[1].theta, pair_k[1].height]]
-        l_list = [[pair_l[0].rho, pair_l[0].theta, pair_l[0].height], [pair_l[1].rho, pair_l[1].theta, pair_l[1].height]]
-        parallelogram_listOLD = [k_list, l_list]
+
         if error != 1:
-            all_errors.append([error, parallelogram_listOLD])
+            all_errors.append([error, parallelogram])
             if valid:
-                valids.append([error, parallelogram_listOLD])
+                valids.append([error, parallelogram])
                 # cv2.waitKey(0)
     print("Number of valid parallelograms: {}".format(len(valids)))
     
     valids_oldTEST = []
     all_errors_oldTEST = []
+    iteration = 0
     for parallelogram in parallelograms_oldTEST:
         valid, error = hough_parallelogram_old.validate_parallelogram(edges, parallelogram, max_rho, rho_buckets, theta_buckets, 0.6)
+
         if error != 1:
             all_errors_oldTEST.append([error, parallelogram])
             if valid:
@@ -205,6 +225,7 @@ while len(files) > 0:
         # print("Agreement_oldTEST: {}".format(p[0]))
         # cv2.waitKey(0)
     # draw_parallelograms(test_image, accumulated, [p[1] for p in all_agreements], "Sorted parallelograms")
+    find_different_elements(all_errors, all_errors_oldTEST)
     assert(all_errors == all_errors_oldTEST)
     print("~~~~~~~~TESTING~~~~~~~~ Errors agree")
     assert(valids == valids_oldTEST)
