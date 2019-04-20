@@ -185,6 +185,7 @@ while len(files) > 0:
     #     theta1 = parallelogram[1][1]
     parallelograms_oldTEST = hough_parallelogram_old.findParallelograms(peak_pairs_oldTEST, accumulated, 0.7, np.pi / 6)
     find_different_elements(parallelograms, parallelograms_oldTEST)
+    assert(parallelograms == parallelograms_oldTEST)
 
     valids = []
     all_errors = []

@@ -36,6 +36,7 @@ class Parallelogram:
     edges: list of length 4
     peak pairs: pair_k
                 pair_l
+
     """
     def __init__(self, peak_pairs, max_rho, rho_buckets, theta_buckets):
         self.pair_k = peak_pairs[0]
@@ -58,6 +59,7 @@ class PeakPair:
                 rho_j
     average values: average_theta
                     average_height
+    distance between peaks: peak_distance
     """
     def __init__(self, peak_i, peak_j):
         self.peak_i = peak_i
@@ -67,6 +69,8 @@ class PeakPair:
         self.rho_j = peak_j.rho
         self.average_theta = (peak_i.theta + peak_j.theta) / 2.0
         self.average_height = (peak_i.height + peak_j.height) / 2.0
+
+        self.peak_distance = abs(self.rho_i - self.rho_j)
     
     def old_list_format(self):
         return (self.peak_i, self.peak_j)
@@ -227,11 +231,23 @@ def findParallelograms(peak_pairs_obj, acc, pixel_thresh, parallel_angle_thresh,
             d_1 = abs((delta_rho_k - average_l[1] * np.sin(alpha)) / delta_rho_k)
             d_2 = abs((delta_rho_l - average_k[1] * np.sin(alpha)) / delta_rho_l)
 
-            if max(d_1, d_2) < pixel_thresh and alpha > parallel_angle_thresh:
-                parallelogram_pairs = [pair_k, pair_l]
+            # Now using PeakPair object.
+            pair_k = peak_pairs_obj[i]
+            pair_l = peak_pairs_obj[j]
+
+            assert(pair_k.peak_distance == delta_rho_k and pair_k.average_height == average_k[1])
+            assert(pair_l.peak_distance == delta_rho_l and pair_l.average_height == average_l[1])
+
+            d_1a = abs((pair_k.peak_distance - pair_l.average_height * np.sin(alpha)) / pair_k.peak_distance)
+            d_2a = abs((pair_l.peak_distance - pair_k.average_height * np.sin(alpha)) / pair_l.peak_distance)
+            assert(d_1 == d_1a)
+            assert(d_2 == d_2a)
+
+            if max(d_1a, d_2a) < pixel_thresh and alpha > parallel_angle_thresh:
+                parallelogram_pairs = [peak_pairs[i], peak_pairs[j]]
                 parallelograms.append(parallelogram_pairs)
-                obj = Parallelogram(parallelogram_pairs, max_rho, rho_buckets, theta_buckets)
-                parallelogram_objects.append(obj)
+                # obj = Parallelogram(parallelogram_pairs, max_rho, rho_buckets, theta_buckets)
+                parallelogram_objects.append((pair_k, pair_l))
 
     return parallelograms
 
