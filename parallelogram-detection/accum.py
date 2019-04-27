@@ -168,7 +168,7 @@ while len(files) > 0:
     # lines_image = np.zeros((edges.shape[0], edges.shape[1], 3))
     # draw_lines(lines_image, accumulated, peaks, (255, 0, 0), "Hough lines")
 
-    peak_pairs = hough_parallelogram.findPeakPairs(peaks, accumulated, 3.0, 0.3, 0.3, max_rho, rho_buckets, theta_buckets)
+    peak_pairs = hough_parallelogram.findPeakPairs(peaks, accumulated, 3.0, 0.3, 0.3, max_rho, rho_buckets)
     print("Number of peak pairs: {}".format(len(peak_pairs)))
     peak_pairs_oldTEST = hough_parallelogram_old.findPeakPairs(peaks_oldTEST, accumulated, 3.0, 0.3, 0.3, max_rho, rho_buckets, theta_buckets)
     
@@ -176,7 +176,7 @@ while len(files) > 0:
     # draw_pairs(pairs_image, accumulated, peak_pairs)
     
     # Test findParallelograms
-    parallelograms = hough_parallelogram.findParallelograms(peak_pairs, accumulated, 0.7, np.pi / 6, max_rho, rho_buckets, theta_buckets)
+    parallelograms = hough_parallelogram.findParallelograms(peak_pairs, accumulated, 0.7, np.pi / 6)
     print("Number of parallelograms: {}".format(len(parallelograms)))
     # for parallelogram in parallelograms:
     #     rho0 = parallelogram[0][0]
@@ -190,7 +190,7 @@ while len(files) > 0:
     valids = []
     all_errors = []
     for parallelogram in parallelograms:
-        valid, error = hough_parallelogram.validate_parallelogram(edges, parallelogram, max_rho, rho_buckets, theta_buckets, 0.6)
+        valid, error = hough_parallelogram.validate_parallelogram(parallelogram, edges, 0.6)
 
         if error != 1:
             all_errors.append([error, [parallelogram[0].old_list_format(), parallelogram[1].old_list_format()]])

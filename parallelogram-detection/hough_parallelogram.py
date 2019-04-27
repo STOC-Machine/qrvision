@@ -218,7 +218,7 @@ def findPeaks(acc, enhanced_acc, peak_thresh, max_rho, rho_buckets, theta_bucket
 """
 Note: angle_thresh is the number of theta indices, not a true angle
 """
-def findPeakPairs(peaks, acc, angle_thresh, pixel_thresh, rho_thresh, max_rho, rho_buckets, theta_buckets):
+def findPeakPairs(peaks, acc, angle_thresh, pixel_thresh, rho_thresh, max_rho, rho_buckets):
     peak_pairs = []
     for i in range(0, len(peaks)):
         for j in range(i+1, len(peaks)):
@@ -241,7 +241,7 @@ def findPeakPairs(peaks, acc, angle_thresh, pixel_thresh, rho_thresh, max_rho, r
 """
 Note: this assumes 'true values'
 """
-def findParallelograms(peak_pairs, acc, pixel_thresh, parallel_angle_thresh, max_rho, rho_buckets, theta_buckets):
+def findParallelograms(peak_pairs, acc, pixel_thresh, parallel_angle_thresh):
     parallelogram_objects = []
     # for each pair of pairs:
     for i in range(0, len(peak_pairs)):
@@ -259,7 +259,7 @@ def findParallelograms(peak_pairs, acc, pixel_thresh, parallel_angle_thresh, max
 
     return parallelogram_objects
 
-def find_actual_perimeter(edge_image, parallelogram, max_rho, rho_buckets, theta_buckets):
+def find_actual_perimeter(parallelogram, edge_image):
     # Loop along each pixel of each edge of the parallelogram,
     # as defined by our accumulator method.
     # If the pixel is on, add 1 to the perimeter.
@@ -302,7 +302,7 @@ def find_actual_perimeter(edge_image, parallelogram, max_rho, rho_buckets, theta
 """
 Requires: edge image
 """
-def validate_parallelogram(edge_image, parallelogram, max_rho, rho_buckets, theta_buckets, parallelogram_thresh):
+def validate_parallelogram(parallelogram, edge_image, parallelogram_thresh):
     #TODO: get this data from parallelogram
     pair_k = parallelogram[0]
     pair_l = parallelogram[1]
@@ -316,7 +316,7 @@ def validate_parallelogram(edge_image, parallelogram, max_rho, rho_buckets, thet
     b = pair_l.peak_distance / np.sin(alpha)
     perim_estimate = 2 * (a + b)
 
-    perim_actual = find_actual_perimeter(edge_image, parallelogram, max_rho, rho_buckets, theta_buckets)
+    perim_actual = find_actual_perimeter(parallelogram, edge_image)
     if perim_actual == False:
         return False, 1
     
@@ -364,7 +364,7 @@ Resulting format: list of 4 vertex lists
 Each vertex is a list of [x, y] coordinates.
 A [-1, -1] vertex is taken to be invalid.
 """
-def find_parallelogram_vertices(parallelogram, max_rho, rho_buckets, theta_buckets):
+def find_parallelogram_vertices(parallelogram):
     pair_k = parallelogram[0]
     pair_l = parallelogram[1]
 
