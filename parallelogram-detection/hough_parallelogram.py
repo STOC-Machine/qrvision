@@ -253,55 +253,19 @@ def findPeakPairs(peaks, acc, angle_thresh, pixel_thresh, rho_thresh, max_rho, r
 Note: this assumes 'true values'
 """
 def findParallelograms(peak_pairs_obj, acc, pixel_thresh, parallel_angle_thresh, max_rho, rho_buckets, theta_buckets):
-    # peakPairs input format:
-    # [pair1: [rho, theta, height], pair2: ...]
-    peak_pairs = []
-    for obj in peak_pairs_obj:
-        peak_pairs.append(obj.old_list_format())
-    
-    # print("peakPairs:\n{}".format(peak_pairs))
-    
-    # find average rho, theta for the pairs:
-    pair_averages = []
-    for pair in peak_pairs:
-        theta_p = (pair[0].theta + pair[1].theta) / 2.0
-        c_p = (pair[0].height + pair[1].height) / 2.0
-        pair_averages.append([theta_p, c_p])
-
-    parallelograms = []
     parallelogram_objects = []
     # for each pair of pairs:
-    for i in range(0, len(peak_pairs)):
-        for j in range(i + 1, len(peak_pairs)):
-            pair_k = peak_pairs[i]
-            average_k = pair_averages[i]
-            pair_l = peak_pairs[j]
-            average_l = pair_averages[j]
-
-            delta_rho_k = abs(pair_k[0].rho - pair_k[1].rho)
-            delta_rho_l = abs(pair_l[0].rho - pair_l[1].rho)
-
-            alpha = abs(average_k[0] - average_l[0])
-
-            d_1 = abs((delta_rho_k - average_l[1] * np.sin(alpha)) / delta_rho_k)
-            d_2 = abs((delta_rho_l - average_k[1] * np.sin(alpha)) / delta_rho_l)
-
-            # Now using PeakPair object.
+    for i in range(0, len(peak_pairs_obj)):
+        for j in range(i + 1, len(peak_pairs_obj)):
             pair_k = peak_pairs_obj[i]
             pair_l = peak_pairs_obj[j]
 
-            assert(pair_k.peak_distance == delta_rho_k and pair_k.average_height == average_k[1])
-            assert(pair_l.peak_distance == delta_rho_l and pair_l.average_height == average_l[1])
+            alpha = abs(pair_k.average_theta - pair_l.average_theta)
 
             d_1a = abs((pair_k.peak_distance - pair_l.average_height * np.sin(alpha)) / pair_k.peak_distance)
             d_2a = abs((pair_l.peak_distance - pair_k.average_height * np.sin(alpha)) / pair_l.peak_distance)
-            assert(d_1 == d_1a)
-            assert(d_2 == d_2a)
 
             if max(d_1a, d_2a) < pixel_thresh and alpha > parallel_angle_thresh:
-                parallelogram_pairs = [peak_pairs[i], peak_pairs[j]]
-                parallelograms.append(parallelogram_pairs)
-                # obj = Parallelogram(parallelogram_pairs, max_rho, rho_buckets, theta_buckets)
                 parallelogram_objects.append((pair_k, pair_l))
 
     return parallelogram_objects
