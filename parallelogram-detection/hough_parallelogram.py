@@ -332,17 +332,18 @@ Requires: edge image
 """
 def validate_parallelogram(edge_image, parallelogram, max_rho, rho_buckets, theta_buckets, parallelogram_thresh):
     #TODO: get this data from parallelogram
-    pair_k = parallelogram[0].old_list_format()
-    pair_l = parallelogram[1].old_list_format()
-    delta_rho_k = abs(pair_k[0].rho - pair_k[1].rho)
-    delta_rho_l = abs(pair_l[0].rho - pair_l[1].rho)
-    average_alpha_k = (pair_k[0].theta + pair_k[1].theta) / 2.0
-    average_alpha_l = (pair_l[0].theta + pair_l[1].theta) / 2.0
-    alpha = abs(average_alpha_k - average_alpha_l)
-    a = delta_rho_k / np.sin(alpha)
-    b = delta_rho_l / np.sin(alpha)
-    
+    pair_k = parallelogram[0]
+    pair_l = parallelogram[1]
+
+    # Calculate estimated perimeter of parallelogram based on the "lines" 
+    # (peaks) that make it up.
+    # This uses the formula p = 2(a + b), 
+    # where a and b are the lengths of the sides.
+    alpha = abs(pair_k.average_theta - pair_l.average_theta)
+    a = pair_k.peak_distance / np.sin(alpha)
+    b = pair_l.peak_distance / np.sin(alpha)
     perim_estimate = 2 * (a + b)
+
     perim_actual = find_actual_perimeter(edge_image, parallelogram, max_rho, rho_buckets, theta_buckets)
     if perim_actual == False:
         return False, 1
