@@ -219,31 +219,20 @@ def findPeaks(acc, enhanced_acc, peak_thresh, max_rho, rho_buckets, theta_bucket
 Note: angle_thresh is the number of theta indices, not a true angle
 """
 def findPeakPairs(peaks, acc, angle_thresh, pixel_thresh, rho_thresh, max_rho, rho_buckets, theta_buckets):
-    peak_pairs = []
     peak_pairs_obj = []
     for i in range(0, len(peaks)):
         for j in range(i+1, len(peaks)):
-            cur1 = acc[peaks[i].rho_bucket][peaks[i].theta_bucket]
-            cur2 = acc[peaks[j].rho_bucket][peaks[j].theta_bucket]
             height_i = peaks[i].height
             height_j = peaks[j].height
-            assert(height_i == cur1)
-            assert(height_j == cur2)
             
             if abs(peaks[i].theta_bucket - peaks[j].theta_bucket) < angle_thresh:
-                if abs(cur1 - cur2) < (pixel_thresh * (cur1 + cur2)/2):
+                if abs(height_i - height_j) < (pixel_thresh * (height_i + height_j)/2):
                     rho_i = convert_rho(peaks[i].rho_bucket, max_rho, rho_buckets)
-                    theta_i = convert_angle_radians(peaks[i].theta_bucket, theta_buckets)
                     
                     rho_j = convert_rho(peaks[j].rho_bucket, max_rho, rho_buckets)
-                    theta_j = convert_angle_radians(peaks[j].theta_bucket, theta_buckets)
                     
-                    if abs(rho_i - rho_j) > rho_thresh * (cur1 + cur2) / 2:
-                        # peak_pairs.append(([rho_i, theta_i, cur1],[rho_j, theta_j, cur2]))
-                        peak_pairs.append((peaks[i], peaks[j]))
-                        new_pair = PeakPair(peaks[i], peaks[j])
-                        peak_pairs_obj.append(new_pair)
-                        assert((peaks[i], peaks[j]) == new_pair.old_list_format())
+                    if abs(rho_i - rho_j) > rho_thresh * (height_i + height_j) / 2:
+                        peak_pairs_obj.append(PeakPair(peaks[i], peaks[j]))
                     
     return peak_pairs_obj
     #y coordinate is close to each other, and value in acc is close
