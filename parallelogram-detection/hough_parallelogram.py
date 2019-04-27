@@ -17,6 +17,10 @@ Point = collections.namedtuple("Point", ["x", "y"])
 
 class Edge:
     """
+    An Edge is a segment defined mostly by a single Peak line.
+    It is bordered (constrained) by two bordering lines. These lines come 
+    from accumulator Peaks.
+    
     Fields:
     endpoints (x, y)
     endpoint_[top bottom]: the endpoints of the edge segment.
@@ -25,9 +29,7 @@ class Edge:
         rho (radius from origin, pixels)
         theta (angle from vertical, degrees)
 
-    An Edge is a segment defined mostly by a single Peak line.
-    It is bordered (constrained) by two bordering lines. These lines come 
-    from accumulator Peaks.
+    base_peak: the Peak object that defines the edge segment
     """
 
     """
@@ -37,7 +39,8 @@ class Edge:
                        edge's endpoints
     """
     def __init__(self, edge_peak, border_peak_1, border_peak_2):
-        self.endpoints = []
+        self.base_peak = edge_peak
+        
         self.rho = edge_peak.rho
         self.theta = edge_peak.theta
         
@@ -51,6 +54,31 @@ class Edge:
             self.endpoint_top = endpoint_2
             self.endpoint_bottom = endpoint_1
 
+    """
+    Determines if the entire edge is contained in the image.
+
+    Input:
+    image: the numpy array for the image.
+           This is used to get the boundaries of the image.
+    """
+    def in_image(self, image):
+        y_size = image.shape[0]
+        x_size = image.shape[1]
+
+        if self.endpoint_top[1] < 0 or self.endpoint_top[1] >= y_size:
+            return False
+        if self.endpoint_bottom[1] < 0 or self.endpoint_bottom[1] >= y_size:
+            return False
+        if self.endpoint_top[0] < 0 or self.endpoint_top[0] >= x_size:
+            return False
+        if self.endpoint_bottom[0] < 0 or self.endpoint_bottom[0] >= x_size:
+            return False
+
+        return True
+
+    def get_x(self, y):
+        return (self.rho / np.cos(self.theta)) - (y * np.tan(self.theta))
+
 class Parallelogram:
     """
     Fields:
@@ -62,7 +90,7 @@ class Parallelogram:
     def __init__(self, peak_pairs, max_rho, rho_buckets, theta_buckets):
         self.pair_k = peak_pairs[0]
         self.pair_l = peak_pairs[1]
-        self.edges = find_parallelogram_edges(peak_pairs, max_rho, rho_buckets, theta_buckets)
+        self.edges = find_parallelogram_edges(peak_pairs)
 
 class PeakPair:
     """
@@ -279,10 +307,6 @@ def findParallelograms(peak_pairs_obj, acc, pixel_thresh, parallel_angle_thresh,
     return parallelogram_objects
 
 def find_actual_perimeter(edge_image, parallelogram, max_rho, rho_buckets, theta_buckets):
-    test_image = np.zeros((edge_image.shape[0], edge_image.shape[1], 3))
-    test_overlay = cv2.cvtColor(edge_image, cv2.COLOR_GRAY2BGR)
-    colors = ((255, 255, 255), (255, 0, 0), (0, 0, 255), (0, 255, 0))
-
     # Loop along each pixel of each edge of the parallelogram,
     # as defined by our accumulator method.
     # If the pixel is on, add 1 to the perimeter.
@@ -290,54 +314,22 @@ def find_actual_perimeter(edge_image, parallelogram, max_rho, rho_buckets, theta
     # with the lit pixels almost exactly and the actual perimeter returned
     # by this function should match the length of the accumulator lines almost
     # exactly. 
-    
-    pair_k = parallelogram[0].old_list_format()
-    pair_l = parallelogram[1].old_list_format()
-    
-    edges = [pair_k[0], pair_l[1], pair_k[1], pair_l[0]]
-
-    # Returned in format: [x, y]
-    vertices = find_parallelogram_vertices(parallelogram, max_rho, rho_buckets, theta_buckets)
+    edge_objects = find_parallelogram_edges(parallelogram)
 
     perimeter = 0
     # For each segment on the parallelogram:
     # This is a pair of sequential vertices:
     # 0, 1; 1, 2; 2, 3; 3, 0
-    for i in range(0, len(edges)):
-        # Get the index of the second vertex: wraps back to 0 after 3
-        j = (i + 1) % 4;
-        vert0 = vertices[i]
-        vert1 = vertices[j]
-        rho = edges[i].rho
-        theta = edges[i].theta
-
-        # Check that all vertices are actually in the image.
-        # If they're not, this can't be a valid parallelogram in the image
-        if vert0[0] < 0 or vert0[0] >= edge_image.shape[1]:
-            return False
-        if vert0[1] < 0 or vert0[1] >= edge_image.shape[0]:
-            return False
-        if vert1[0] < 0 or vert1[0] >= edge_image.shape[1]:
-            return False
-        if vert1[1] < 0 or vert1[1] >= edge_image.shape[0]:
+    for i in range(0, len(edge_objects)):
+        if not edge_objects[i].in_image(edge_image):
             return False
 
-        draw0 = (int(vert0[0]), int(vert0[1]))
-        draw1 = (int(vert1[0]), int(vert1[1]))
-        # print("draw0 {} draw1 {}".format(draw0, draw1))
-        # cv2.line(test_overlay, draw0, draw1, colors[i])
-        # cv2.imshow("Testing perimeter", test_overlay)
+        y_bottom = int(edge_objects[i].endpoint_bottom[1])
+        y_top = int(edge_objects[i].endpoint_top[1])
 
-        y0 = int(vert0[1])
-        y1 = int(vert1[1])
-        # If y1 > y0, switch them so the range still works as expected
-        if y0 > y1:
-            tmp = y0
-            y0 = y1
-            y1 = tmp
-        for y in range(y0, y1 + 1):
-            x = int((rho / np.cos(theta)) - (y * np.tan(theta)))
-            # print("x {} y {}".format(x, y))
+        for y in range(y_bottom, y_top + 1):
+            x = int(edge_objects[i].get_x(y))
+            
             # If this pixel is on, add 1 to perimeter
             if edge_image[y][x] != 0:
             #     print("Hey! Perimeter! {}".format(perimeter))
@@ -439,13 +431,13 @@ def find_parallelogram_vertices(parallelogram, max_rho, rho_buckets, theta_bucke
 
     return intersection_0, intersection_1, intersection_2, intersection_3
 
-def find_parallelogram_edges(parallelogram, max_rho, rho_buckets, theta_buckets):
+def find_parallelogram_edges(parallelogram):
     peak_k = parallelogram[0].old_list_format()
     peak_l = parallelogram[1].old_list_format()
 
     side_0 = Edge(peak_k[0], peak_l[0], peak_l[1])
-    side_1 = Edge(peak_l[0], peak_k[0], peak_k[1])
+    side_1 = Edge(peak_l[1], peak_k[0], peak_k[1])
     side_2 = Edge(peak_k[1], peak_l[1], peak_l[0])
-    side_3 = Edge(peak_l[1], peak_k[1], peak_k[0])
+    side_3 = Edge(peak_l[0], peak_k[1], peak_k[0])
 
     return side_0, side_1, side_2, side_3
