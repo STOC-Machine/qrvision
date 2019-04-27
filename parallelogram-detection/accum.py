@@ -170,7 +170,8 @@ def analyze_accums(accum):
     cv2.waitKey(0)
     cv2.destroyAllWindows()
 def combine(t1, t2, t3, t4):
-    return numpy.add(t1, t2, t3, t4)
+    return t1
+    #return np.add(t1, t2, t3, t4)
 max_rho = 0
 rho_buckets = 500
 theta_buckets = 200
@@ -186,7 +187,7 @@ while len(files) > 0:
     tiles = make_tiles(img, 10, 10)
     tile_accums = []
     for row in tiles:
-        row = []
+        accum_row = []
         for tile in row:
             # cv2.imshow("Original", img)
             edges = cv2.Canny(tile, 100, 100)
@@ -201,12 +202,15 @@ while len(files) > 0:
             #cv2.imshow("accum.jpg", accumimage)
             #cv2.waitKey(0)
             #cv2.destroyAllWindows()
-            row.append(accumulated)
-        tile_accums.append(row)
+            accum_row.append(accumulated)
+        tile_accums.append(accum_row)
     quads = []
-    for i in range(len(tile_accums)):
-        for j in range(len(tile_accums[i])):
+    for i in range(len(tile_accums) -1):
+        print(tile_accums)
+        for j in range(len(tile_accums[i]) -1):
             quads.append(combine(tile_accums[i][j],tile_accums[i][j+1],tile_accums[i +1][j], tile_accums[i+1][j+1]))
-    for quad in quads:
-        analyze_accums(quad)
+    #for quad in quads:
+    #    analyze_accums(quad)
+    print(len(tile_accums))
+    print(len(quads))
     break
