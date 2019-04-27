@@ -60,6 +60,10 @@ class PeakPair:
     average values: average_theta
                     average_height
     distance between peaks: peak_distance
+
+    It also includes individual edge angles, since we need to use that 
+    sometimes. However, for the most part, the averages are used because
+    that corresponds to a true parallelogram.
     """
     def __init__(self, peak_i, peak_j):
         self.peak_i = peak_i
@@ -67,6 +71,8 @@ class PeakPair:
 
         self.rho_i = peak_i.rho
         self.rho_j = peak_j.rho
+        self.theta_i = peak_i.theta
+        self.theta_j = peak_j.theta
         self.average_theta = (peak_i.theta + peak_j.theta) / 2.0
         self.average_height = (peak_i.height + peak_j.height) / 2.0
 
@@ -276,7 +282,7 @@ def find_actual_perimeter(edge_image, parallelogram, max_rho, rho_buckets, theta
     # For each segment on the parallelogram:
     # This is a pair of sequential vertices:
     # 0, 1; 1, 2; 2, 3; 3, 0
-    for i in range(0, 4):
+    for i in range(0, len(edges)):
         # Get the index of the second vertex: wraps back to 0 after 3
         j = (i + 1) % 4;
         vert0 = vertices[i]
@@ -393,31 +399,26 @@ Each vertex is a list of [x, y] coordinates.
 A [-1, -1] vertex is taken to be invalid.
 """
 def find_parallelogram_vertices(parallelogram, max_rho, rho_buckets, theta_buckets):
-    pair_k = parallelogram[0].old_list_format()
-    pair_l = parallelogram[1].old_list_format()
-    
-    rho_k_0 = pair_k[0].rho
-    theta_k_0 = pair_k[0].theta
-    rho_k_1 = pair_k[1].rho
-    theta_k_1 = pair_k[1].theta
-    rho_l_0 = pair_l[0].rho
-    theta_l_0 = pair_l[0].theta
-    rho_l_1 = pair_l[1].rho
-    theta_l_1 = pair_l[1].theta
-    
-    intersection_0 = find_intersection(rho_k_0, theta_k_0, rho_l_0, theta_l_0)
-    # print("Intersection 0: x {}    y {}".format(intersection_1[0], intersection_1[1]))
-    intersection_1 = find_intersection(rho_k_0, theta_k_0, rho_l_1, theta_l_1)
-    # print("Intersection 1: x {}    y {}".format(intersection_2[0], intersection_2[1]))
-    intersection_2 = find_intersection(rho_k_1, theta_k_1, rho_l_1, theta_l_1)
-    # print("Intersection 2: x {}    y {}".format(intersection_4[0], intersection_4[1]))
-    intersection_3 = find_intersection(rho_k_1, theta_k_1, rho_l_0, theta_l_0)
-    # print("Intersection 3: x {}    y {}".format(intersection_3[0], intersection_3[1]))
+    pair_k = parallelogram[0]
+    pair_l = parallelogram[1]
+
+    rho_k_i = pair_k.rho_i
+    theta_k_i = pair_k.theta_i
+    rho_k_j = pair_k.rho_j
+    theta_k_j = pair_k.theta_j
+    rho_l_i = pair_l.rho_i
+    theta_l_i = pair_l.theta_i
+    rho_l_j = pair_l.rho_j
+    theta_l_j = pair_l.theta_j
+
+    intersection_0 = find_intersection(rho_k_i, theta_k_i, rho_l_i, theta_l_i)
+    intersection_1 = find_intersection(rho_k_i, theta_k_i, rho_l_j, theta_l_j)
+    intersection_2 = find_intersection(rho_k_j, theta_k_j, rho_l_j, theta_l_j)
+    intersection_3 = find_intersection(rho_k_j, theta_k_j, rho_l_i, theta_l_i)
 
     return intersection_0, intersection_1, intersection_2, intersection_3
 
 def find_parallelogram_edges(parallelogram, max_rho, rho_buckets, theta_buckets):
-    # print("parallelogram \n{}".format(parallelogram))
     peak_k = parallelogram[0].old_list_format()
     peak_l = parallelogram[1].old_list_format()
 
