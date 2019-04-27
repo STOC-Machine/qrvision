@@ -13,22 +13,43 @@ denoted C.
 """
 Peak = collections.namedtuple("Peak", ["rho_bucket", "rho", "theta_bucket", "theta", "height"])
 # Note for refactor: peak[0] = rho, peak[1] = theta
+Point = collections.namedtuple("Point", ["x", "y"])
 
 class Edge:
     """
     Fields:
     endpoints (x, y)
+    endpoint_[top bottom]: the endpoints of the edge segment.
+                           They are sorted by their vertical (y) axis position.
     peak parameterization:
         rho (radius from origin, pixels)
         theta (angle from vertical, degrees)
+
+    An Edge is a segment defined mostly by a single Peak line.
+    It is bordered (constrained) by two bordering lines. These lines come 
+    from accumulator Peaks.
     """
-    def __init__(self, actual, left, right):
+
+    """
+    Input:
+    edge_peak: the Peak object representing the line that contains the edge
+    border_peak_[1 2]: the bordering, or constraining, peaks that define the
+                       edge's endpoints
+    """
+    def __init__(self, edge_peak, border_peak_1, border_peak_2):
         self.endpoints = []
-        self.rho = actual.rho
-        self.theta = actual.theta
+        self.rho = edge_peak.rho
+        self.theta = edge_peak.theta
         
-        self.endpoints.append(find_intersection(self.rho, self.theta, left.rho, left.theta))
-        self.endpoints.append(find_intersection(self.rho, self.theta, right.rho, right.theta))
+        endpoint_1 = find_intersection(self.rho, self.theta, border_peak_1.rho, border_peak_1.theta)
+        endpoint_2 = find_intersection(self.rho, self.theta, border_peak_2.rho, border_peak_2.theta)
+
+        if endpoint_1[1] > endpoint_2[1]:
+            self.endpoint_top = endpoint_1
+            self.endpoint_bottom = endpoint_2
+        else:
+            self.endpoint_top = endpoint_2
+            self.endpoint_bottom = endpoint_1
 
 class Parallelogram:
     """
