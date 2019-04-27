@@ -314,21 +314,21 @@ def find_actual_perimeter(edge_image, parallelogram, max_rho, rho_buckets, theta
     # with the lit pixels almost exactly and the actual perimeter returned
     # by this function should match the length of the accumulator lines almost
     # exactly. 
-    edge_objects = find_parallelogram_edges(parallelogram)
+    edges = find_parallelogram_edges(parallelogram)
 
     perimeter = 0
     # For each segment on the parallelogram:
     # This is a pair of sequential vertices:
     # 0, 1; 1, 2; 2, 3; 3, 0
-    for i in range(0, len(edge_objects)):
-        if not edge_objects[i].in_image(edge_image):
+    for edge in edges:
+        if not edge.in_image(edge_image):
             return False
 
-        y_bottom = int(edge_objects[i].endpoint_bottom[1])
-        y_top = int(edge_objects[i].endpoint_top[1])
+        y_bottom = int(edge.endpoint_bottom[1])
+        y_top = int(edge.endpoint_top[1])
 
         for y in range(y_bottom, y_top + 1):
-            x = int(edge_objects[i].get_x(y))
+            x = int(edge.get_x(y))
             
             # If this pixel is on, add 1 to perimeter
             if edge_image[y][x] != 0:
@@ -432,12 +432,12 @@ def find_parallelogram_vertices(parallelogram, max_rho, rho_buckets, theta_bucke
     return intersection_0, intersection_1, intersection_2, intersection_3
 
 def find_parallelogram_edges(parallelogram):
-    peak_k = parallelogram[0].old_list_format()
-    peak_l = parallelogram[1].old_list_format()
+    pair_k = parallelogram[0]
+    pair_l = parallelogram[1]
 
-    side_0 = Edge(peak_k[0], peak_l[0], peak_l[1])
-    side_1 = Edge(peak_l[1], peak_k[0], peak_k[1])
-    side_2 = Edge(peak_k[1], peak_l[1], peak_l[0])
-    side_3 = Edge(peak_l[0], peak_k[1], peak_k[0])
+    side_0 = Edge(pair_k.peak_i, pair_l.peak_i, pair_l.peak_j)
+    side_1 = Edge(pair_l.peak_i, pair_k.peak_i, pair_k.peak_j)
+    side_2 = Edge(pair_k.peak_j, pair_l.peak_i, pair_l.peak_j)
+    side_3 = Edge(pair_l.peak_j, pair_k.peak_i, pair_k.peak_j)
 
     return side_0, side_1, side_2, side_3
