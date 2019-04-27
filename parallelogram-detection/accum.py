@@ -110,42 +110,20 @@ def make_tiles(img, numx, numy):
     y = 0
     x = 0
     while y < height:
+        row = []
         while x < width :
             new_img = img[y: y+yInc, x:x+xInc]
             x = x+xInc
-            tiles.append(new_img)
+            row.append(new_img)
+        tiles.append(row)
         x = 0
         y = y+yInc
-    for img in tiles:
-        cv2.imshow("image",img)
-        cv2.waitKey(0)
-    cv2.destroyAllWindows()
-
-max_rho = 0
-rho_buckets = 500
-theta_buckets = 200
-
-files = glob.glob(sys.argv[1])
-while len(files) > 0:
-    file = files.pop(0)
-    img = cv2.imread(file)
-    tiles = make_tiles(img, 10, 10)
-    break
-    if img is None:
-        print('Error: could not read image file {}, skipping.'.format(file))
-        continue
-
-    # cv2.imshow("Original", img)
-    edges = cv2.Canny(img, 100, 100)
-    cv2.imshow("Edges", edges)
-    accumulated = accumulate(edges, theta_buckets, rho_buckets)
-    maximum = np.amax(accumulated)
-
-    # Run accumulator
-    accumimage = (255.0 / maximum) * accumulated
-    # cv2.imshow("Accum", accumulated.astype(np.uint8))
-    cv2.imwrite("accum.jpg", accumimage.astype(np.uint8))
-
+    #for img in tiles:
+    #    cv2.imshow("image",img)
+    #    cv2.waitKey(0)
+    #cv2.destroyAllWindows()
+    return tiles
+def analyze_accums(accum):
     # Run enhancement
     enhanced = hough_parallelogram.enhance(accumulated, 20, 20)
     enhanceimage = (255.0 / np.amax(enhanced)) * enhanced
@@ -180,7 +158,7 @@ while len(files) > 0:
         rho1 = parallelogram[1][0]
         theta1 = parallelogram[1][1]
 
-    edges_0 = hough_parallelogram.find_parallelogram_edges(parallelograms[0], max_rho, rho_buckets, theta_buckets)
+    #edges_0 = hough_parallelogram.find_parallelogram_edges(parallelograms[0], max_rho, rho_buckets, theta_buckets)
 
     for parallelogram in parallelograms:
         hough_parallelogram.validate_parallelogram(edges, parallelogram, max_rho, rho_buckets, theta_buckets, 0.3)
@@ -191,3 +169,44 @@ while len(files) > 0:
     # Wait for keypress to continue, close old windows
     cv2.waitKey(0)
     cv2.destroyAllWindows()
+def combine(t1, t2, t3, t4):
+    return numpy.add(t1, t2, t3, t4)
+max_rho = 0
+rho_buckets = 500
+theta_buckets = 200
+
+files = glob.glob(sys.argv[1])
+while len(files) > 0:
+    file = files.pop(0)
+    img = cv2.imread(file)
+    if img is None:
+        print('Error: could not read image file {}, skipping.'.format(file))
+        continue
+
+    tiles = make_tiles(img, 10, 10)
+    tile_accums = []
+    for row in tiles:
+        row = []
+        for tile in row:
+            # cv2.imshow("Original", img)
+            edges = cv2.Canny(tile, 100, 100)
+            cv2.imshow("Edges", edges)
+            accumulated = accumulate(edges, theta_buckets, rho_buckets)
+            maximum = np.amax(accumulated)
+
+            # Run accumulator
+            accumimage = (255.0 / maximum) * accumulated
+            # cv2.imshow("Accum", accumulated.astype(np.uint8))
+            cv2.imwrite("accum.jpg", accumimage.astype(np.uint8))
+            #cv2.imshow("accum.jpg", accumimage)
+            #cv2.waitKey(0)
+            #cv2.destroyAllWindows()
+            row.append(accumulated)
+        tile_accums.append(row)
+    quads = []
+    for i in range(len(tile_accums)):
+        for j in range(len(tile_accums[i])):
+            quads.append(combine(tile_accums[i][j],tile_accums[i][j+1],tile_accums[i +1][j], tile_accums[i+1][j+1]))
+    for quad in quads:
+        analyze_accums(quad)
+    break
