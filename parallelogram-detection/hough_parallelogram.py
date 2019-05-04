@@ -257,7 +257,6 @@ def findPeakPairs(peaks, acc, angle_thresh, pixel_thresh, rho_thresh, max_rho, r
 Note: this assumes 'true values'
 """
 def findParallelograms(peak_pairs, acc, pixel_thresh, parallel_angle_thresh):
-    parallelogram_objects = []
     parallelograms = []
     # for each pair of pairs:
     for i in range(0, len(peak_pairs)):
@@ -271,11 +270,9 @@ def findParallelograms(peak_pairs, acc, pixel_thresh, parallel_angle_thresh):
             d_2a = abs((pair_l.peak_distance - pair_k.average_height * np.sin(alpha)) / pair_l.peak_distance)
 
             if max(d_1a, d_2a) < pixel_thresh and alpha > parallel_angle_thresh:
-                parallelogram_objects.append((pair_k, pair_l))
                 parallelograms.append(Parallelogram(pair_k, pair_l))
-                assert(parallelogram_objects[-1] == parallelograms[-1].old_list_format())
 
-    return parallelogram_objects
+    return parallelograms
 
 def find_actual_perimeter(parallelogram, edge_image):
     # Loop along each pixel of each edge of the parallelogram,
@@ -285,8 +282,8 @@ def find_actual_perimeter(parallelogram, edge_image):
     # with the lit pixels almost exactly and the actual perimeter returned
     # by this function should match the length of the accumulator lines almost
     # exactly. 
-    pair_k = parallelogram[0]
-    pair_l = parallelogram[1]
+    pair_k = parallelogram.pair_k
+    pair_l = parallelogram.pair_l
     edges = find_parallelogram_edges(pair_k, pair_l)
 
     perimeter = 0
@@ -324,16 +321,15 @@ Requires: edge image
 """
 def validate_parallelogram(parallelogram, edge_image, parallelogram_thresh):
     #TODO: get this data from parallelogram
-    pair_k = parallelogram[0]
-    pair_l = parallelogram[1]
+    pair_k = parallelogram.pair_k
+    pair_l = parallelogram.pair_l
 
     # Calculate estimated perimeter of parallelogram based on the "lines" 
     # (peaks) that make it up.
     # This uses the formula p = 2(a + b), 
     # where a and b are the lengths of the sides.
-    alpha = abs(pair_k.average_theta - pair_l.average_theta)
-    side_a = pair_k.peak_distance / np.sin(alpha)
-    side_b = pair_l.peak_distance / np.sin(alpha)
+    side_a = pair_k.peak_distance / np.sin(parallelogram.alpha)
+    side_b = pair_l.peak_distance / np.sin(parallelogram.alpha)
     perim_estimate = 2 * (side_a + side_b)
 
     perim_actual = find_actual_perimeter(parallelogram, edge_image)
@@ -385,8 +381,8 @@ Each vertex is a list of [x, y] coordinates.
 A [-1, -1] vertex is taken to be invalid.
 """
 def find_parallelogram_vertices(parallelogram):
-    pair_k = parallelogram[0]
-    pair_l = parallelogram[1]
+    pair_k = parallelogram.pair_k
+    pair_l = parallelogram.pair_l
 
     rho_k_i = pair_k.rho_i
     theta_k_i = pair_k.theta_i

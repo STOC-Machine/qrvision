@@ -193,10 +193,10 @@ while len(files) > 0:
         valid, error = hough_parallelogram.validate_parallelogram(parallelogram, edges, 0.6)
 
         if error != 1:
-            all_errors.append([error, [parallelogram[0].old_list_format(), parallelogram[1].old_list_format()]])
+            all_errors.append([error, [parallelogram.pair_k.old_list_format(), parallelogram.pair_l.old_list_format()]])
             assert(type(all_errors[-1][0] == "float64"))
             if valid:
-                valids.append([error, [parallelogram[0].old_list_format(), parallelogram[1].old_list_format()]])
+                valids.append([error, [parallelogram.pair_k.old_list_format(), parallelogram.pair_l.old_list_format()]])
                 # cv2.waitKey(0)
     print("Number of valid parallelograms: {}".format(len(valids)))
     
@@ -235,7 +235,7 @@ while len(files) > 0:
 
     # Test edges in the most basic way possible: should except for syntax errors, etc
     for parallelogram in parallelograms:
-        parallelogram_edge = hough_parallelogram.find_parallelogram_edges(parallelogram[0], parallelogram[1])
+        parallelogram_edge = hough_parallelogram.find_parallelogram_edges(parallelogram.pair_k, parallelogram.pair_l)
     
     # print(draw_parallelograms(lines_image, accumulated, parallelograms, "Parallelograms"))
     
