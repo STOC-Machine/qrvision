@@ -54,6 +54,19 @@ class Edge:
             self.endpoint_top = endpoint_2
             self.endpoint_bottom = endpoint_1
 
+    def __eq__(self, other):
+        if not (self.endpoint_bottom == other.endpoint_bottom).all:
+            return False
+        if not (self.endpoint_top == other.endpoint_top).all:
+            return False
+        if self.rho != other.rho:
+            return False
+        if self.theta != other.theta:
+            return False
+        if self.base_peak != other.base_peak:
+            return False
+        return True
+
     """
     Determines if the entire edge is contained in the image.
 
@@ -282,27 +295,21 @@ def find_actual_perimeter(parallelogram, edge_image):
     # with the lit pixels almost exactly and the actual perimeter returned
     # by this function should match the length of the accumulator lines almost
     # exactly. 
-    pair_k = parallelogram.pair_k
-    pair_l = parallelogram.pair_l
-    edges = find_parallelogram_edges(pair_k, pair_l)
 
     perimeter = 0
-    # For each segment on the parallelogram:
-    # This is a pair of sequential vertices:
-    # 0, 1; 1, 2; 2, 3; 3, 0
-    for edge in edges:
+    for edge in parallelogram.edges:
         if not edge.in_image(edge_image):
             return False
 
         y_bottom = int(edge.endpoint_bottom[1])
         y_top = int(edge.endpoint_top[1])
 
+        # Iterate through each pixel in the segment
         for y in range(y_bottom, y_top + 1):
             x = int(edge.get_x(y))
             
             # If this pixel is on, add 1 to perimeter
             if edge_image[y][x] != 0:
-            #     print("Hey! Perimeter! {}".format(perimeter))
                 perimeter = perimeter + 1
         
         # Loop the y coordinate in the range between the included values
