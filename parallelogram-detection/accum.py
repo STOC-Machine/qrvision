@@ -235,7 +235,7 @@ while len(files) > 0:
 
     # Test edges in the most basic way possible: should except for syntax errors, etc
     for parallelogram in parallelograms:
-        parallelogram_edge = hough_parallelogram.find_parallelogram_edges(parallelogram)
+        parallelogram_edge = hough_parallelogram.find_parallelogram_edges(parallelogram[0], parallelogram[1])
     
     # print(draw_parallelograms(lines_image, accumulated, parallelograms, "Parallelograms"))
     

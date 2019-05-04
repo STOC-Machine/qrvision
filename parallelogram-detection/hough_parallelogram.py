@@ -83,19 +83,34 @@ class Parallelogram:
     """
     Fields:
     edges: list of length 4
+    alpha: the angle between the peak pairs
+
+    It also contains the original PeakPairs that define the parallelogram:
     peak pairs: pair_k
                 pair_l
+    """
 
     """
-    def __init__(self, peak_pairs, max_rho, rho_buckets, theta_buckets):
-        self.pair_k = peak_pairs[0]
-        self.pair_l = peak_pairs[1]
-        self.edges = find_parallelogram_edges(peak_pairs)
+    Input:
+    The PeakPair objects that make up the parallelogram.
+    The order of which is called k and which is l does not matter.
+    We just have to define them arbitrarily.
+    """
+    def __init__(self, pair_k, pair_l):
+        self.pair_k = pair_k
+        self.pair_l = pair_l
+        self.edges = find_parallelogram_edges(self.pair_k, self.pair_l)
+
+        self.alpha = abs(self.pair_k.average_theta - self.pair_l.average_theta)
+
+    def old_list_format(self):
+        return (self.pair_k, self.pair_l)
 
 class PeakPair:
     """
     Fields:
-    Initial information. These are the values that make up the accumulator peaks in the pair.
+    Initial information. These are the values that make up the accumulator 
+    peaks in the pair.
     peaks:  peak_i
             peak_j
     
@@ -243,6 +258,7 @@ Note: this assumes 'true values'
 """
 def findParallelograms(peak_pairs, acc, pixel_thresh, parallel_angle_thresh):
     parallelogram_objects = []
+    parallelograms = []
     # for each pair of pairs:
     for i in range(0, len(peak_pairs)):
         for j in range(i + 1, len(peak_pairs)):
@@ -256,6 +272,8 @@ def findParallelograms(peak_pairs, acc, pixel_thresh, parallel_angle_thresh):
 
             if max(d_1a, d_2a) < pixel_thresh and alpha > parallel_angle_thresh:
                 parallelogram_objects.append((pair_k, pair_l))
+                parallelograms.append(Parallelogram(pair_k, pair_l))
+                assert(parallelogram_objects[-1] == parallelograms[-1].old_list_format())
 
     return parallelogram_objects
 
@@ -267,7 +285,9 @@ def find_actual_perimeter(parallelogram, edge_image):
     # with the lit pixels almost exactly and the actual perimeter returned
     # by this function should match the length of the accumulator lines almost
     # exactly. 
-    edges = find_parallelogram_edges(parallelogram)
+    pair_k = parallelogram[0]
+    pair_l = parallelogram[1]
+    edges = find_parallelogram_edges(pair_k, pair_l)
 
     perimeter = 0
     # For each segment on the parallelogram:
@@ -312,9 +332,9 @@ def validate_parallelogram(parallelogram, edge_image, parallelogram_thresh):
     # This uses the formula p = 2(a + b), 
     # where a and b are the lengths of the sides.
     alpha = abs(pair_k.average_theta - pair_l.average_theta)
-    a = pair_k.peak_distance / np.sin(alpha)
-    b = pair_l.peak_distance / np.sin(alpha)
-    perim_estimate = 2 * (a + b)
+    side_a = pair_k.peak_distance / np.sin(alpha)
+    side_b = pair_l.peak_distance / np.sin(alpha)
+    perim_estimate = 2 * (side_a + side_b)
 
     perim_actual = find_actual_perimeter(parallelogram, edge_image)
     if perim_actual == False:
@@ -384,10 +404,7 @@ def find_parallelogram_vertices(parallelogram):
 
     return intersection_0, intersection_1, intersection_2, intersection_3
 
-def find_parallelogram_edges(parallelogram):
-    pair_k = parallelogram[0]
-    pair_l = parallelogram[1]
-
+def find_parallelogram_edges(pair_k, pair_l):
     side_0 = Edge(pair_k.peak_i, pair_l.peak_i, pair_l.peak_j)
     side_1 = Edge(pair_l.peak_i, pair_k.peak_i, pair_k.peak_j)
     side_2 = Edge(pair_k.peak_j, pair_l.peak_i, pair_l.peak_j)
