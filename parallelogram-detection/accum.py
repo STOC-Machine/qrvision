@@ -4,6 +4,7 @@ import numpy as np
 import sys
 import math
 import hough_parallelogram
+import hough_parallelogram_old
 
 """
 Generates the Hough accumulator array for the given image.
@@ -102,6 +103,27 @@ def draw_parallelograms(image, accum, ps, title):
             image = draw_lines(image, accum, pair, color, "Pair 1")
     cv2.imshow(title, image)
 
+def find_different_elements(one, two):
+    if one == two:
+        print("Agree")
+        return
+
+    if len(one) > len(two):
+        print(two[len(one):])
+        print("Number of disagreeing elements: {}".format(len(one) - len(two)))
+        return
+    if len(two) > len(one):
+        print(one[len(two):])
+        print("Number of disagreeing elements: {}".format(len(two) - len(one)))
+        return
+    different = 0
+    for i in range(0, len(one)):
+        if one[i] != two[i]:
+            print("Disagreeing: {}".format(one[i]))
+            print("             {}".format(two[i]))
+            different += 1
+    print("Number of disagreeing elements: {}".format(different))
+
 max_rho = 0
 rho_buckets = 500
 theta_buckets = 500
@@ -135,18 +157,20 @@ while len(files) > 0:
     
     # Test findPeaks
     max_rho = img.shape[0] + img.shape[1]
-    peaks = hough_parallelogram.findPeaks(enhanced, 500)
+    peaks = hough_parallelogram.findPeaks(accumulated, enhanced, 500, max_rho, rho_buckets, theta_buckets)
     print("Number of peaks: {}".format(len(peaks)))
     # for peak in peaks:
     #     rho = peak[0]
     #     theta = peak[1]
     #     print("Peak: rho {}, theta {}, height {}".format(rho, theta, accumulated[rho][theta]))
-        
-    lines_image = np.zeros((edges.shape[0], edges.shape[1], 3))
+    peaks_oldTEST = hough_parallelogram_old.findPeaks(accumulated, enhanced, 500, max_rho, rho_buckets, theta_buckets)
+    
+    # lines_image = np.zeros((edges.shape[0], edges.shape[1], 3))
     # draw_lines(lines_image, accumulated, peaks, (255, 0, 0), "Hough lines")
 
-    peak_pairs = hough_parallelogram.findPeakPairs(peaks, accumulated, 3.0, 0.3, 0.3, max_rho, rho_buckets, theta_buckets)
+    peak_pairs = hough_parallelogram.findPeakPairs(peaks, accumulated, 3.0, 0.3, 0.3, max_rho, rho_buckets)
     print("Number of peak pairs: {}".format(len(peak_pairs)))
+    peak_pairs_oldTEST = hough_parallelogram_old.findPeakPairs(peaks_oldTEST, accumulated, 3.0, 0.3, 0.3, max_rho, rho_buckets, theta_buckets)
     
     pairs_image = np.zeros((edges.shape[0], edges.shape[1], 3))
     # draw_pairs(pairs_image, accumulated, peak_pairs)
@@ -154,34 +178,61 @@ while len(files) > 0:
     # Test findParallelograms
     parallelograms = hough_parallelogram.findParallelograms(peak_pairs, accumulated, 0.7, np.pi / 6)
     print("Number of parallelograms: {}".format(len(parallelograms)))
-    for parallelogram in parallelograms:
-        rho0 = parallelogram[0][0]
-        theta0 = parallelogram[0][1]
-        rho1 = parallelogram[1][0]
-        theta1 = parallelogram[1][1]
-
-    edges_0 = hough_parallelogram.find_parallelogram_edges(parallelograms[0], max_rho, rho_buckets, theta_buckets)
+    # for parallelogram in parallelograms:
+    #     rho0 = parallelogram[0][0]
+    #     theta0 = parallelogram[0][1]
+    #     rho1 = parallelogram[1][0]
+    #     theta1 = parallelogram[1][1]
+    parallelograms_oldTEST = hough_parallelogram_old.findParallelograms(peak_pairs_oldTEST, accumulated, 0.7, np.pi / 6)
+    # find_different_elements(parallelograms, parallelograms_oldTEST)
+    # assert(parallelograms == parallelograms_oldTEST)
 
     valids = []
     all_errors = []
     for parallelogram in parallelograms:
-        valid, error = hough_parallelogram.validate_parallelogram(edges, parallelogram, max_rho, rho_buckets, theta_buckets, 0.6)
-        if error != 1:
-            all_errors.append([error, parallelogram])
-            if valid:
-                valids.append([error, parallelogram])
-                cv2.waitKey(0)
-    print("Number of valid parallelograms: {}".format(len(valids)))
+        valid, error = hough_parallelogram.validate_parallelogram(parallelogram, edges, 0.6)
 
-    all_errors.sort()
+        if error != 1:
+            all_errors.append([error, [parallelogram.pair_k.old_list_format(), parallelogram.pair_l.old_list_format()]])
+            assert(type(all_errors[-1][0] == "float64"))
+            if valid:
+                valids.append([error, [parallelogram.pair_k.old_list_format(), parallelogram.pair_l.old_list_format()]])
+                # cv2.waitKey(0)
+    print("Number of valid parallelograms: {}".format(len(valids)))
+    
+    valids_oldTEST = []
+    all_errors_oldTEST = []
+    iteration = 0
+    for parallelogram in parallelograms_oldTEST:
+        valid, error = hough_parallelogram_old.validate_parallelogram(edges, parallelogram, max_rho, rho_buckets, theta_buckets, 0.6)
+
+        if error != 1:
+            all_errors_oldTEST.append([error, parallelogram])
+            if valid:
+                valids_oldTEST.append([error, parallelogram])
+                # cv2.waitKey(0)
+
+    all_errors.sort(key=lambda x: x[0])
     for p in all_errors:
         test_image = np.zeros((edges.shape[0], edges.shape[1], 3))
         test_overlay = cv2.cvtColor(edges, cv2.COLOR_GRAY2BGR)
-        draw_parallelograms(test_image, accumulated, [p[1]], "Sorted parallelograms")
-        print("Agreement: {}".format(p[0]))
-        cv2.waitKey(0)
+        # draw_parallelograms(test_image, accumulated, [p[1]], "Sorted parallelograms")
+        # print("Agreement: {}".format(p[0]))
+        # cv2.waitKey(0)
+    all_errors_oldTEST.sort()
+    for p in all_errors_oldTEST:
+        test_image = np.zeros((edges.shape[0], edges.shape[1], 3))
+        test_overlay = cv2.cvtColor(edges, cv2.COLOR_GRAY2BGR)
+        # draw_parallelograms(test_image, accumulated, [p[1]], "Sorted parallelograms")
+        # print("Agreement_oldTEST: {}".format(p[0]))
+        # cv2.waitKey(0)
     # draw_parallelograms(test_image, accumulated, [p[1] for p in all_agreements], "Sorted parallelograms")
-    
+    find_different_elements(all_errors, all_errors_oldTEST)
+    assert(all_errors == all_errors_oldTEST)
+    print("~~~~~~~~TESTING~~~~~~~~ Errors agree")
+    assert(valids == valids_oldTEST)
+    print("~~~~~~~~TESTING~~~~~~~~ Valids agree")
+
     # print(draw_parallelograms(lines_image, accumulated, parallelograms, "Parallelograms"))
     
     # Wait for keypress to continue, close old windows
