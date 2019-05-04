@@ -112,7 +112,13 @@ class Parallelogram:
     def __init__(self, pair_k, pair_l):
         self.pair_k = pair_k
         self.pair_l = pair_l
-        self.edges = find_parallelogram_edges(self.pair_k, self.pair_l)
+
+        # Create Edges
+        side_0 = Edge(pair_k.peak_i, pair_l.peak_i, pair_l.peak_j)
+        side_1 = Edge(pair_l.peak_i, pair_k.peak_i, pair_k.peak_j)
+        side_2 = Edge(pair_k.peak_j, pair_l.peak_i, pair_l.peak_j)
+        side_3 = Edge(pair_l.peak_j, pair_k.peak_i, pair_k.peak_j)
+        self.edges = (side_0, side_1, side_2, side_3)
 
         self.alpha = abs(self.pair_k.average_theta - self.pair_l.average_theta)
 
@@ -345,10 +351,8 @@ def validate_parallelogram(parallelogram, edge_image, parallelogram_thresh):
     
     if abs(perim_actual - perim_estimate) < perim_estimate * parallelogram_thresh:
         # Valid
-        # print("                  Valid: estimate {} actual {} ======================".format(perim_estimate, perim_actual))
         return True, abs(perim_actual - perim_estimate) / perim_estimate
     else:
-        # print("INVALID: estimate {} actual {}".format(perim_estimate, perim_actual))
         return False, abs(perim_actual - perim_estimate) / perim_estimate
 
 """
@@ -359,7 +363,6 @@ If there is no intersection, it returns the point [-1, -1].
 You have to check for this whenever you use this function.
 """
 def find_intersection(rho_1, theta_1, rho_2, theta_2):
-    # print("rho1 {} theta1 {} rho2 {} theta2 {}".format(rho_1, theta_1, rho_2, theta_2))
     b = np.array([rho_1, rho_2])
     transform = np.array([[np.cos(theta_1), np.sin(theta_1)],
                           [np.cos(theta_2), np.sin(theta_2)]])
@@ -367,50 +370,7 @@ def find_intersection(rho_1, theta_1, rho_2, theta_2):
     if np.linalg.det(transform) == 0:
         print("HELLO THIS IS AN ERROR YOU HAVE A SINGULAR MATRIX")
         return [-1.0, -1.0]
-    # print("transform \n{}".format(transform))
+
     intersection = np.dot(np.linalg.inv(transform), b)
-    # print("intersection \n{}".format(intersection))
     cartesian = intersection.reshape((2))
     return cartesian
-
-"""
-Vertex 1: k0, l0
-Vertex 2: k0, l1
-Vertex 2: k1, l1
-Vertex 3: k1, l0
-
-Vertices are chosen in this order so that they go sequentially around the 
-parallelogram. We don't know whether it's CW or CCW, or what the orientation 
-of each vertex is with regard to the others.
-
-Resulting format: list of 4 vertex lists
-Each vertex is a list of [x, y] coordinates.
-A [-1, -1] vertex is taken to be invalid.
-"""
-def find_parallelogram_vertices(parallelogram):
-    pair_k = parallelogram.pair_k
-    pair_l = parallelogram.pair_l
-
-    rho_k_i = pair_k.rho_i
-    theta_k_i = pair_k.theta_i
-    rho_k_j = pair_k.rho_j
-    theta_k_j = pair_k.theta_j
-    rho_l_i = pair_l.rho_i
-    theta_l_i = pair_l.theta_i
-    rho_l_j = pair_l.rho_j
-    theta_l_j = pair_l.theta_j
-
-    intersection_0 = find_intersection(rho_k_i, theta_k_i, rho_l_i, theta_l_i)
-    intersection_1 = find_intersection(rho_k_i, theta_k_i, rho_l_j, theta_l_j)
-    intersection_2 = find_intersection(rho_k_j, theta_k_j, rho_l_j, theta_l_j)
-    intersection_3 = find_intersection(rho_k_j, theta_k_j, rho_l_i, theta_l_i)
-
-    return intersection_0, intersection_1, intersection_2, intersection_3
-
-def find_parallelogram_edges(pair_k, pair_l):
-    side_0 = Edge(pair_k.peak_i, pair_l.peak_i, pair_l.peak_j)
-    side_1 = Edge(pair_l.peak_i, pair_k.peak_i, pair_k.peak_j)
-    side_2 = Edge(pair_k.peak_j, pair_l.peak_i, pair_l.peak_j)
-    side_3 = Edge(pair_l.peak_j, pair_k.peak_i, pair_k.peak_j)
-
-    return side_0, side_1, side_2, side_3

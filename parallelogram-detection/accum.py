@@ -233,10 +233,6 @@ while len(files) > 0:
     assert(valids == valids_oldTEST)
     print("~~~~~~~~TESTING~~~~~~~~ Valids agree")
 
-    # Test edges in the most basic way possible: should except for syntax errors, etc
-    for parallelogram in parallelograms:
-        parallelogram_edge = hough_parallelogram.find_parallelogram_edges(parallelogram.pair_k, parallelogram.pair_l)
-    
     # print(draw_parallelograms(lines_image, accumulated, parallelograms, "Parallelograms"))
     
     # Wait for keypress to continue, close old windows
