@@ -169,9 +169,30 @@ def analyze_accums(accum):
     # Wait for keypress to continue, close old windows
     cv2.waitKey(0)
     cv2.destroyAllWindows()
-def combine(t1, t2, t3, t4):
+def combine(t1, t2, t3, t4, tile_size): #tile size does not account for the weird one at the end
+    list = [t1,t2,t3,t4]
+    rho = len(t1) * 2
+    theta = len(t1[0])
+    output = np.zeros((rho, theta))
+    xdis =  0
+    ydis = 0
+    nRho = 0
+    for a in range(len(list)):
+        for iR in range(len(list[a])):
+            for jT in range(len(list[a][0])):
+                if a == 1 or a == 3:
+                    xdis = tile_size[0]
+                if a == 2 or a == 3:
+                    ydis = tile_size[1]
+                else :
+                    xdis = 0
+                    ydis = 0
+                nRho = (xdis * math.sin(convert_angle(jT, theta)) + (ydis * math.cos(convert_angle(jT, theta)) + convert_rho(iR, math.sqrt(tile_size[0]*tile_size[0] + tile_size[1]*tile_size[1]),rho/2))
+                output[nRho][jT] += list[a][iR][jT]
+
+
+
     return t1
-    #return np.add(t1, t2, t3, t4)
 max_rho = 0
 rho_buckets = 500
 theta_buckets = 200
@@ -183,8 +204,14 @@ while len(files) > 0:
     if img is None:
         print('Error: could not read image file {}, skipping.'.format(file))
         continue
+    edges = cv2.Canny(img, 100, 100)
+    accum_full = accumulate(edges,theta_buckets, rho_buckets)
+    maximum = np.amax(accum_full)
+    accumimage = (255.0 / maximum) * accum_full
+    cv2.imwrite("accum_full.jpg", accumimage.astype(np.uint8))
 
-    tiles = make_tiles(img, 10, 10)
+    tiles = make_tiles(img, 2, 2)
+    tile_size = tiles[0][0].shape()
     tile_accums = []
     for row in tiles:
         accum_row = []
@@ -208,8 +235,11 @@ while len(files) > 0:
     for i in range(len(tile_accums) -1):
         print(tile_accums)
         for j in range(len(tile_accums[i]) -1):
-            quads.append(combine(tile_accums[i][j],tile_accums[i][j+1],tile_accums[i +1][j], tile_accums[i+1][j+1]))
-    #for quad in quads:
+            quads.append(combine(tile_accums[i][j],tile_accums[i][j+1],tile_accums[i +1][j], tile_accums[i+1][j+1]), tile_size)
+    for quad in quads:
+        maximum = np.amax(quad)
+        accumimage = (255.0 / maximum) * quad
+        cv2.imwrite("accum_quad.jpg", accumimage.astype(np.uint8))
     #    analyze_accums(quad)
     print(len(tile_accums))
     print(len(quads))
