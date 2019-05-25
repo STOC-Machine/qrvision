@@ -4,6 +4,8 @@ import numpy as np
 import sys
 import math
 import hough_parallelogram
+from hough_parallelogram import convert_angle as convert_angle
+from hough_parallelogram import convert_rho as convert_rho
 
 """
 Generates the Hough accumulator array for the given image.
@@ -169,7 +171,7 @@ def analyze_accums(accum):
     # Wait for keypress to continue, close old windows
     cv2.waitKey(0)
     cv2.destroyAllWindows()
-def combine(t1, t2, t3, t4, tile_size): #tile size does not account for the weird one at the end
+def combine(t1, t2, t3, t4, tile_size, maxRho): #tile size does not account for the weird one at the end
     list = [t1,t2,t3,t4]
     rho = len(t1) * 2
     theta = len(t1[0])
@@ -187,8 +189,11 @@ def combine(t1, t2, t3, t4, tile_size): #tile size does not account for the weir
                 else :
                     xdis = 0
                     ydis = 0
-                nRho = (xdis * math.sin(convert_angle(jT, theta)) + (ydis * math.cos(convert_angle(jT, theta)) + convert_rho(iR, math.sqrt(tile_size[0]*tile_size[0] + tile_size[1]*tile_size[1]),rho/2))
-                output[nRho][jT] += list[a][iR][jT]
+                nRho = (xdis * math.sin(convert_angle(jT, theta)) + (ydis * math.cos(convert_angle(jT, theta)) + convert_rho(iR, math.sqrt(tile_size[0]*tile_size[0] + tile_size[1]*tile_size[1]),rho/2)))
+                print("maxRho", maxRho)
+                j = round((nRho + maxRho) / (2 * maxRho / (1.0 * rho)))
+                print(j)
+                output[j][jT] += list[a][iR][jT]
 
 
 
@@ -211,12 +216,12 @@ while len(files) > 0:
     cv2.imwrite("accum_full.jpg", accumimage.astype(np.uint8))
 
     tiles = make_tiles(img, 2, 2)
-    tile_size = tiles[0][0].shape()
+    tile_size = tiles[0][0].shape
     tile_accums = []
     for row in tiles:
         accum_row = []
         for tile in row:
-            # cv2.imshow("Original", img)
+            cv2.imshow("Tile", tile)
             edges = cv2.Canny(tile, 100, 100)
             cv2.imshow("Edges", edges)
             accumulated = accumulate(edges, theta_buckets, rho_buckets)
@@ -227,15 +232,18 @@ while len(files) > 0:
             # cv2.imshow("Accum", accumulated.astype(np.uint8))
             cv2.imwrite("accum.jpg", accumimage.astype(np.uint8))
             #cv2.imshow("accum.jpg", accumimage)
-            #cv2.waitKey(0)
-            #cv2.destroyAllWindows()
+            cv2.waitKey(0)
+            cv2.destroyAllWindows()
             accum_row.append(accumulated)
         tile_accums.append(accum_row)
     quads = []
     for i in range(len(tile_accums) -1):
         print(tile_accums)
         for j in range(len(tile_accums[i]) -1):
-            quads.append(combine(tile_accums[i][j],tile_accums[i][j+1],tile_accums[i +1][j], tile_accums[i+1][j+1]), tile_size)
+            width = len(tiles[i][j]) + len(tiles[i][j+1])
+            height = len(tiles[i][j][0]) + len(tiles[i+1][j][0])
+            maxRho = math.sqrt(width*width + height*height)
+            quads.append(combine(tile_accums[i][j],tile_accums[i][j+1],tile_accums[i +1][j], tile_accums[i+1][j+1], tile_size, maxRho))
     for quad in quads:
         maximum = np.amax(quad)
         accumimage = (255.0 / maximum) * quad
