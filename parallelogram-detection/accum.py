@@ -38,8 +38,8 @@ def accumulate(image, theta_buckets, rho_buckets):
     while(not iterator.finished):
         if(iterator[0] != 0):
             for i in range(0, theta_buckets):
-                theta = np.pi * (1.0 * i / theta_buckets)
-                rho = (iterator.multi_index[1] * math.cos(theta)) + (iterator.multi_index[0] * math.sin(theta))
+                theta = np.pi * (1.0 * i / theta_buckets) # Theta runs from 0 to pi
+                rho = (iterator.multi_index[1] * math.cos(theta)) + (iterator.multi_index[0] * math.sin(theta)) # x cos(th) + y sin(th)
                 j = round((rho + max_rho) / (2 * max_rho / (1.0 * rho_buckets)))
                 accum[j][i] += 1
         iterator.iternext()
@@ -173,25 +173,43 @@ def analyze_accums(accum):
     cv2.destroyAllWindows()
 def combine(t1, t2, t3, t4, tile_size, maxRho): #tile size does not account for the weird one at the end
     list = [t1,t2,t3,t4]
-    rho = len(t1) * 2
-    theta = len(t1[0])
+    rho = len(t1) * 2 # width of new accumulator = 2 * width of old
+    theta = len(t1[0]) # height of new accumulator = old, since angles don't change
     output = np.zeros((rho, theta))
-    xdis =  0
-    ydis = 0
+
+    im1 = (255.0 / maximum) * t1
+    cv2.imshow("t1", im1.astype(np.uint8))
+    im2 = (255.0 / maximum) * t2
+    cv2.imshow("t2", im2.astype(np.uint8))
+    im3 = (255.0 / maximum) * t3
+    cv2.imshow("t3", im3.astype(np.uint8))
+    im4 = (255.0 / maximum) * t4
+    cv2.imshow("t4", im4.astype(np.uint8))
+    cv2.waitKey(0)
+    cv2.destroyAllWindows()
+            
+    max_rho_tile = math.sqrt(tile_size[0]*tile_size[0] + tile_size[1]*tile_size[1])
+    
+    xdis =  0 # X distance from the upper-left origin of the whole system
+    ydis = 0  # y distance from the upper-left origin of the whole system
     nRho = 0
     for a in range(len(list)):
-        for iR in range(len(list[a])):
-            for jT in range(len(list[a][0])):
+        for iR in range(len(list[a])): # iR: rho bucket number
+            for jT in range(len(list[a][0])): # jT: theta bucket number
+                xdis = 0
+                ydis = 0
                 if a == 1 or a == 3:
                     xdis = tile_size[0]
                 if a == 2 or a == 3:
                     ydis = tile_size[1]
-                else :
-                    xdis = 0
-                    ydis = 0
-                nRho = (xdis * math.sin(convert_angle(jT, theta)) + (ydis * math.cos(convert_angle(jT, theta)) + convert_rho(iR, math.sqrt(tile_size[0]*tile_size[0] + tile_size[1]*tile_size[1]),rho/2)))
+                
+                theta_angle = convert_angle(jT, theta) # jT: bucket number; theta: total buckets
+                rho_tile = convert_rho(iR, max_rho_tile, rho/2)
+
+                rho_new = rho_tile + (xdis * math.cos(theta_angle)) + (ydis * math.sin(theta_angle))
+                
                 print("maxRho", maxRho)
-                j = round((nRho + maxRho) / (2 * maxRho / (1.0 * rho)))
+                j = round((rho_new + maxRho) / (2 * maxRho / (1.0 * rho)))
                 print(j)
                 output[j][jT] += list[a][iR][jT]
 
@@ -232,8 +250,8 @@ while len(files) > 0:
             # cv2.imshow("Accum", accumulated.astype(np.uint8))
             cv2.imwrite("accum.jpg", accumimage.astype(np.uint8))
             #cv2.imshow("accum.jpg", accumimage)
-            cv2.waitKey(0)
-            cv2.destroyAllWindows()
+            # cv2.waitKey(0)
+            # cv2.destroyAllWindows()
             accum_row.append(accumulated)
         tile_accums.append(accum_row)
     quads = []
